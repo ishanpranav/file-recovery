@@ -8,7 +8,7 @@ CFLAGS=-O3 -pedantic -std=c99 -Wall -Wextra
 all: nyufile
 
 nyufile: main.c
-	$(CC) $(CFLAGS) *.o main.c -o nyufile
+	$(CC) $(CFLAGS) main.c -o nyufile
 
 clean:
 	rm -f *.o nyufile a.out
