@@ -6,6 +6,7 @@
 
 struct VolumeRootIterator
 {
+    uint32_t sectors;
     Volume instance;
 };
 

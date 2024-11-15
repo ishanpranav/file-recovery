@@ -105,7 +105,7 @@ int main(int count, char* args[])
             options |= OPTIONS_SHA1;
             sha1 = optarg;
 
-            if (sha1[0] == '-')
+            if (sha1[0] == '-' || !(options & OPTIONS_RECOVER))
             {
                 main_print_usage(app);
 
@@ -149,7 +149,7 @@ int main(int count, char* args[])
 
     if (options & OPTIONS_LIST)
     {
-        uint32_t entries;
+        uint32_t entries = 0;
         struct VolumeRootIterator it;
 
         for (volume_begin(&it, &disk); volume_next(&it); entries++)
