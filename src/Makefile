@@ -12,7 +12,7 @@ CFLAGS=-D_POSIX_C_SOURCE=2 -O3 -pedantic -std=c99 -Wall -Wextra
 
 all: nyufile
 
-nyufile: main.c
+nyufile: main.c options.h
 	$(CC) $(CFLAGS) main.c -o nyufile
 
 clean:

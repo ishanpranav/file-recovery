@@ -8,6 +8,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "options.h"
+#define main_assert_not_option(arg, args) do                                   \
+{                                                                              \
+    if (*(arg) == '-')                                                         \
+    {                                                                          \
+        main_print_usage((args));                                              \
+        exit(EXIT_FAILURE);                                                    \
+    }                                                                          \
+}                                                                              \
+while (0);
 
 static void main_print_usage(char* args[])
 {
@@ -22,27 +32,65 @@ static void main_print_usage(char* args[])
 
 int main(int count, char* args[])
 {
-    int option;
+    if (count < 2)
+    {
+        main_print_usage(args);
 
-    while ((option = getopt(count, args, "ilr:R:s:")) != -1)
+        return EXIT_FAILURE;
+    }
+
+    char* disk = args[1];
+
+    main_assert_not_option(disk, args);
+
+    int option;
+    Options options = OPTIONS_NONE;
+
+    while ((option = getopt(count - 1, args + 1, ":ilr:R:s:")) != -1)
     {
         switch (option)
         {
         case 'i':
+            options |= OPTIONS_INFORMATION;
             break;
 
-        case 'l': break;
-        case 'r': break;
-        case 'R': break;
-        case 's': break;
+        case 'l':
+            options |= OPTIONS_LIST;
+            break;
+
+        case 'r':
+            options |= OPTIONS_RECOVER_CONTIGUOUS;
+        
+            main_assert_not_option(optarg, args);
+            break;
+
+        case 'R':
+            options |= OPTIONS_RECOVER_NON_CONTIGUOUS;
+
+            main_assert_not_option(optarg, args);
+            break;
+
+        case 's':
+            options |= OPTIONS_SHA1;
+
+            main_assert_not_option(optarg, args);
+            break;
 
         default:
             main_print_usage(args);
+
             return EXIT_FAILURE;
         }
     }
-        
-    if (optind >= count)
+
+    printf("options: 0x%x\n", options);
+
+    if (options == OPTIONS_NONE ||
+        (options & OPTIONS_RECOVER) == OPTIONS_RECOVER ||
+        (options & OPTIONS_INFORMATION && options != OPTIONS_INFORMATION) ||
+        (options & OPTIONS_LIST && options != OPTIONS_LIST) ||
+        (options & OPTIONS_SHA1 && !(options & OPTIONS_RECOVER)) ||
+        (options & OPTIONS_RECOVER_NON_CONTIGUOUS && !(options & OPTIONS_SHA1)))
     {
         main_print_usage(args);
 
