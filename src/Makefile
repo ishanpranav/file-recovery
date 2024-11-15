@@ -12,4 +12,3 @@ nyufile: main.c
 
 clean:
 	rm -f *.o nyufile a.out
- 
