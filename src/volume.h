@@ -9,7 +9,7 @@
 struct Volume
 {
     off_t size;
-    char* data;
+    unsigned char* data;
 };
 
 /** Represents a FAT32 disk image. */
