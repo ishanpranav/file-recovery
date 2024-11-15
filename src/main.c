@@ -6,11 +6,21 @@
 //  - https://www.man7.org/linux/man-pages/man3/getopt.3.html
 //  - https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html
 
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "options.h"
-#define main_fail_usage(args) do                                               \
+#include "volume.h"
+#define main_fail(app) do                                                      \
+{                                                                              \
+    perror((app));                                                             \
+    exit(EXIT_FAILURE);                                                        \
+}                                                                              \
+while (false)
+#define main_fail_usage(app) do                                                \
 {                                                                              \
     printf(                                                                    \
         "Usage: %s disk <options>\n"                                           \
@@ -18,29 +28,39 @@
         "  -l                     List the root directory.\n"                  \
         "  -r filename [-s sha1]  Recover a contiguous file.\n"                \
         "  -R filename -s sha1    Recover a possibly non-contiguous file.\n",  \
-        args[0]);                                                              \
+        (app));                                                                \
     exit(EXIT_FAILURE);                                                        \
 }                                                                              \
-while (0);
-#define main_assert_not_option(arg, args) do                                   \
+while (false)
+#define main_assert_not_option(arg, app) do                                    \
 {                                                                              \
     if (*(arg) == '-')                                                         \
     {                                                                          \
-        main_fail_usage(args)                                                  \
+        main_fail_usage((app));                                                \
     }                                                                          \
 }                                                                              \
-while (0);
+while (false)
 
 int main(int count, char* args[])
 {
-    if (count < 2)
+    if (count < 1)
     {
-        main_fail_usage(args);
+        return EXIT_FAILURE;
     }
 
-    char* disk = args[1];
+    char* app = args[0];
 
-    main_assert_not_option(disk, args);
+    if (count < 2)
+    {
+        main_fail_usage(app);
+    }
+
+    struct Volume disk;
+
+    if (!volume(&disk, args[1]))
+    {
+        main_fail(app);
+    }
 
     int option;
     char* recover = NULL;
@@ -63,24 +83,24 @@ int main(int count, char* args[])
             options |= OPTIONS_RECOVER_CONTIGUOUS;
             recover = optarg;
 
-            main_assert_not_option(recover, args);
+            main_assert_not_option(recover, app);
             break;
 
         case 'R':
             options |= OPTIONS_RECOVER_NON_CONTIGUOUS;
             recover = optarg;
 
-            main_assert_not_option(recover, args);
+            main_assert_not_option(recover, app);
             break;
 
         case 's':
             options |= OPTIONS_SHA1;
             sha1 = optarg;
 
-            main_assert_not_option(sha1, args);
+            main_assert_not_option(sha1, app);
             break;
 
-        default: main_fail_usage(args);
+        default: main_fail_usage(app);
         }
     }
 
@@ -91,7 +111,7 @@ int main(int count, char* args[])
         (options & OPTIONS_SHA1 && !(options & OPTIONS_RECOVER)) ||
         (options & OPTIONS_RECOVER_NON_CONTIGUOUS && !(options & OPTIONS_SHA1)))
     {
-        main_fail_usage(args);
+        main_fail_usage(app);
     }
 
     printf("options: 0x%x, recover: %s, sha1: %s\n", options, recover, sha1);

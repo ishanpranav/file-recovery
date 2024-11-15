@@ -12,8 +12,11 @@ CFLAGS=-D_POSIX_C_SOURCE=2 -O3 -pedantic -std=c99 -Wall -Wextra
 
 all: nyufile
 
-nyufile: main.c options.h
-	$(CC) $(CFLAGS) main.c -o nyufile
+nyufile: main.c options.h volume
+	$(CC) $(CFLAGS) *.o main.c -o nyufile
+
+volume: volume.c volume.h
+	$(CC) $(CFLAGS) -c volume.c
 
 clean:
 	rm -f *.o nyufile a.out
