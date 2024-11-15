@@ -32,7 +32,7 @@ bool volume(Volume instance, char* path)
         goto volume_exit_open;
     }
 
-    unsigned char* data = mmap(
+    Fat32BootSector bootSector = mmap(
         NULL,
         status.st_size,
         PROT_READ | PROT_WRITE,
@@ -40,13 +40,13 @@ bool volume(Volume instance, char* path)
         descriptor,
         0);
 
-    if (data == MAP_FAILED)
+    if (bootSector == MAP_FAILED)
     {
         goto volume_exit_open;
     }
 
     instance->size = status.st_size;
-    instance->data = data;
+    instance->bootSector = bootSector;
     result = true;
 
 volume_exit_open:
@@ -58,5 +58,5 @@ volume_exit:
 
 void finalize_volume(Volume instance)
 {
-    munmap(instance->data, instance->size);
+    munmap(instance->bootSector, instance->size);
 }

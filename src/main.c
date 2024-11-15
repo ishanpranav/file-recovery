@@ -6,6 +6,7 @@
 //  - https://www.man7.org/linux/man-pages/man3/getopt.3.html
 //  - https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -36,14 +37,23 @@ int main(int count, char* args[])
 
     if (count < 2)
     {
-        perror(app);
+        main_print_usage(app);
+
+        goto main_exit;
+    }
+
+    char* path = args[1];
+
+    if (path[0] == '-')
+    {
+        main_print_usage(app);
 
         goto main_exit;
     }
 
     struct Volume disk;
 
-    if (!volume(&disk, args[1]))
+    if (!volume(&disk, path))
     {
         perror(app);
 
@@ -74,7 +84,7 @@ int main(int count, char* args[])
             if (recover[0] == '-')
             {
                 main_print_usage(app);
-                
+
                 goto main_exit_volume;
             }
             break;
@@ -98,14 +108,14 @@ int main(int count, char* args[])
             if (sha1[0] == '-')
             {
                 main_print_usage(app);
-                
+
                 goto main_exit_volume;
             }
             break;
 
         default:
             main_print_usage(app);
-            
+
             goto main_exit_volume;
         }
     }
@@ -119,10 +129,23 @@ int main(int count, char* args[])
     {
         main_print_usage(app);
 
-        goto main_exit_volume;    
+        goto main_exit_volume;
     }
 
-    printf("options: 0x%x, recover: %s, sha1: %s\n", options, recover, sha1);
+    if (options & OPTIONS_INFORMATION)
+    {
+        printf(
+            "Number of FATs = %" PRId8 "\n"
+            "Number of bytes per sector = %" PRId8 "\n"
+            "Number of sectors per cluster = %" PRId8 "\n"
+            "Number of reserved sectors = %" PRId8 "\n",
+            disk.bootSector->fats,
+            disk.bootSector->bytesPerSector,
+            disk.bootSector->sectorsPerCluster,
+            disk.bootSector->reservedSectors);
+    }
+
+    // printf("options: 0x%x, recover: %s, sha1: %s\n", options, recover, sha1);
 
     result = EXIT_SUCCESS;
 

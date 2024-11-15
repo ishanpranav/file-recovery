@@ -4,12 +4,13 @@
 
 #include <sys/types.h>
 #include <stdbool.h>
+#include "fat32_boot_sector.h"
 
 /** Represents a FAT32 disk image. */
 struct Volume
 {
     off_t size;
-    unsigned char* data;
+    Fat32BootSector bootSector;
 };
 
 /** Represents a FAT32 disk image. */
