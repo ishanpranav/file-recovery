@@ -58,21 +58,27 @@ volume_exit:
 
 void volume_begin(VolumeRootIterator iterator, Volume instance)
 {
+    Fat32BootSector bootSector = instance->bootSector;
+
     // From specification:
 
     //   RootDirSectors =
     //     ((BPB_RootEntCnt * 32) + (BPB_BytsPerSec – 1)) / BPB_BytsPerSec;
     
-    uint32_t rootDirectorySectors;
+    uint32_t rootDirectorySectors = (bootSector->rootEntries * 32);
 
-    Fat32BootSector bootSector = instance->bootSector;
-    uint32_t firstDataSector = bootSector->reservedSectors;
+    rootDirectorySectors += bootSector->bytesPerSector - 1;
+    rootDirectorySectors /= bootSector->bytesPerSector;
 
-    firstDataSector += (bootSector.fats * bootSector->fatSize);
-    firstDataSector += rootDirectorySectors;
+    // From specification:
 
     //   FirstDataSector =
     //     BPB_ResvdSecCnt + (BPB_NumFATs * FATSz) + RootDirSectors;
+
+    uint32_t firstDataSector = bootSector->reservedSectors;
+
+    firstDataSector += (bootSector->fats * bootSector->fatSize);
+    firstDataSector += rootDirectorySectors;
 
     // TODO: implement volume_begin
 }

@@ -6,6 +6,18 @@
 #include <stdbool.h>
 #include "fat32_boot_sector.h"
 
+// From specification:
+//   If(FATContent >= 0x0FFFFFF8)
+//        IsEOF = TRUE;
+
+/**
+ * Determines whether a given value is an end of file (EOF) indicator.
+ * 
+ * @param value the value to test
+ * @return `true` if `value` is an EOF indicator; otherwise, `false`.
+ */
+#define volume_is_eof(value) ((value) >= 0x0FFFFFF8)
+
 /** Represents a FAT32 disk image. */
 struct Volume
 {
