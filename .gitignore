@@ -61,3 +61,4 @@ dkms.conf
 # Application
 *.disk
 nyufile
+nyufile-autograder/
