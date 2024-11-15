@@ -51,15 +51,6 @@ int main(int count, char* args[])
         goto main_exit;
     }
 
-    struct Volume disk;
-
-    if (!volume(&disk, path))
-    {
-        perror(app);
-
-        goto main_exit;
-    }
-
     int option;
     char* recover = NULL;
     char* sha1 = NULL;
@@ -105,7 +96,7 @@ int main(int count, char* args[])
             options |= OPTIONS_SHA1;
             sha1 = optarg;
 
-            if (sha1[0] == '-' || !(options & OPTIONS_RECOVER))
+            if (sha1[0] == '-')
             {
                 main_print_usage(app);
 
@@ -130,6 +121,15 @@ int main(int count, char* args[])
         main_print_usage(app);
 
         goto main_exit_volume;
+    }
+
+    struct Volume disk;
+
+    if (!volume(&disk, path))
+    {
+        perror(app);
+
+        goto main_exit;
     }
 
     Fat32BootSector bootSector = disk.bootSector;
