@@ -4,6 +4,7 @@
 
 // References:
 //  - https://www.man7.org/linux/man-pages/man3/getopt.3.html
+//  - https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +45,8 @@ int main(int count, char* args[])
     main_assert_not_option(disk, args);
 
     int option;
+    char* recover = NULL;
+    char* sha1 = NULL;
     Options options = OPTIONS_NONE;
 
     while ((option = getopt(count - 1, args + 1, ":ilr:R:s:")) != -1)
@@ -60,20 +63,23 @@ int main(int count, char* args[])
 
         case 'r':
             options |= OPTIONS_RECOVER_CONTIGUOUS;
-        
-            main_assert_not_option(optarg, args);
+            recover = optarg;
+
+            main_assert_not_option(recover, args);
             break;
 
         case 'R':
             options |= OPTIONS_RECOVER_NON_CONTIGUOUS;
+            recover = optarg;
 
-            main_assert_not_option(optarg, args);
+            main_assert_not_option(recover, args);
             break;
 
         case 's':
             options |= OPTIONS_SHA1;
+            sha1 = optarg;
 
-            main_assert_not_option(optarg, args);
+            main_assert_not_option(sha1, args);
             break;
 
         default:
@@ -82,8 +88,6 @@ int main(int count, char* args[])
             return EXIT_FAILURE;
         }
     }
-
-    printf("options: 0x%x\n", options);
 
     if (options == OPTIONS_NONE ||
         (options & OPTIONS_RECOVER) == OPTIONS_RECOVER ||
@@ -96,6 +100,8 @@ int main(int count, char* args[])
 
         return EXIT_FAILURE;
     }
+
+    printf("options: 0x%x, recover = %s, sha1 = %s\n", options, recover, sha1);
 
     return EXIT_SUCCESS;
 }
