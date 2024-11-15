@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "options.h"
-#include "volume.h"
+#include "volume_root_iterator.h"
 
 static void main_print_usage(char* app)
 {
@@ -132,6 +132,8 @@ int main(int count, char* args[])
         goto main_exit_volume;
     }
 
+    Fat32BootSector bootSector = disk.bootSector;
+
     if (options & OPTIONS_INFORMATION)
     {
         printf(
@@ -139,13 +141,24 @@ int main(int count, char* args[])
             "Number of bytes per sector = %" PRId8 "\n"
             "Number of sectors per cluster = %" PRId8 "\n"
             "Number of reserved sectors = %" PRId8 "\n",
-            disk.bootSector->fats,
-            disk.bootSector->bytesPerSector,
-            disk.bootSector->sectorsPerCluster,
-            disk.bootSector->reservedSectors);
+            bootSector->fats,
+            bootSector->bytesPerSector,
+            bootSector->sectorsPerCluster,
+            bootSector->reservedSectors);
     }
 
-    // printf("options: 0x%x, recover: %s, sha1: %s\n", options, recover, sha1);
+    if (options & OPTIONS_LIST)
+    {
+        uint32_t entries;
+        struct VolumeRootIterator it;
+
+        for (volume_begin(&it, &disk); volume_next(&it); entries++)
+        {
+            printf("entry\n");
+        }
+
+        printf("Total number of entries = %" PRIu32 "\n", entries);
+    }
 
     result = EXIT_SUCCESS;
 

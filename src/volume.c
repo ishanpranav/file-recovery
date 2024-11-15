@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "volume.h"
+#include "volume_root_iterator.h"
 
 bool volume(Volume instance, char* path)
 {
@@ -54,6 +54,16 @@ volume_exit_open:
 
 volume_exit:
     return result;
+}
+
+void volume_begin(VolumeRootIterator iterator, Volume instance)
+{
+    // TODO: implement volume_begin
+}
+
+bool volume_next(VolumeRootIterator iterator)
+{
+    return false; // TODO: implement volume_next
 }
 
 void finalize_volume(Volume instance)

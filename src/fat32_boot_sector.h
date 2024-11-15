@@ -114,7 +114,7 @@ struct Fat32BootSector
      * Specifies the sector number of the FSINFO structure in the reserved area
      * of the FAT32 volume. Typically this is `1`.
      */
-    uint16_t fsInfo;
+    uint16_t fileSystemInfoSector;
 
     /**
      * Specifies the sector number of the backup boot sector in the reserved
