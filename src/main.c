@@ -10,34 +10,32 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "options.h"
+#define main_fail_usage(args) do                                               \
+{                                                                              \
+    printf(                                                                    \
+        "Usage: %s disk <options>\n"                                           \
+        "  -i                     Print the file system information.\n"        \
+        "  -l                     List the root directory.\n"                  \
+        "  -r filename [-s sha1]  Recover a contiguous file.\n"                \
+        "  -R filename -s sha1    Recover a possibly non-contiguous file.\n",  \
+        args[0]);                                                              \
+    exit(EXIT_FAILURE);                                                        \
+}                                                                              \
+while (0);
 #define main_assert_not_option(arg, args) do                                   \
 {                                                                              \
     if (*(arg) == '-')                                                         \
     {                                                                          \
-        main_print_usage((args));                                              \
-        exit(EXIT_FAILURE);                                                    \
+        main_fail_usage(args)                                                  \
     }                                                                          \
 }                                                                              \
 while (0);
-
-static void main_print_usage(char* args[])
-{
-    printf(
-        "Usage: %s disk <options>\n"
-        "  -i                     Print the file system information.\n"
-        "  -l                     List the root directory.\n"
-        "  -r filename [-s sha1]  Recover a contiguous file.\n"
-        "  -R filename -s sha1    Recover a possibly non-contiguous file.\n",
-        args[0]);
-}
 
 int main(int count, char* args[])
 {
     if (count < 2)
     {
-        main_print_usage(args);
-
-        return EXIT_FAILURE;
+        main_fail_usage(args);
     }
 
     char* disk = args[1];
@@ -82,10 +80,7 @@ int main(int count, char* args[])
             main_assert_not_option(sha1, args);
             break;
 
-        default:
-            main_print_usage(args);
-
-            return EXIT_FAILURE;
+        default: main_fail_usage(args);
         }
     }
 
@@ -96,12 +91,10 @@ int main(int count, char* args[])
         (options & OPTIONS_SHA1 && !(options & OPTIONS_RECOVER)) ||
         (options & OPTIONS_RECOVER_NON_CONTIGUOUS && !(options & OPTIONS_SHA1)))
     {
-        main_print_usage(args);
-
-        return EXIT_FAILURE;
+        main_fail_usage(args);
     }
 
-    printf("options: 0x%x, recover = %s, sha1 = %s\n", options, recover, sha1);
+    printf("options: 0x%x, recover: %s, sha1: %s\n", options, recover, sha1);
 
     return EXIT_SUCCESS;
 }
