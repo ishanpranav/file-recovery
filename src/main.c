@@ -156,24 +156,21 @@ int main(int count, char* args[])
 
         for (volume_root_begin(&it, &disk); !it.end; volume_root_next(&it))
         {
-            if (fat32_directory_entry_is_mid_free(it.entry))
-            {
-                continue;
-            }
-
             if (fat32_directory_entry_is_end_free(it.entry))
             {
                 break;
             }
 
-            if (it.entry->attributes & FAT32_ATTRIBUTES_HIDDEN)
+            if (fat32_directory_entry_is_mid_free(it.entry) ||
+                it.entry->attributes & FAT32_ATTRIBUTES_HIDDEN)
             {
                 continue;
             }
 
             char buffer[13];
-            
+
             volume_get_display_name(buffer, it.entry->name);
+            printf("%s", buffer);
 
             uint32_t firstCluster = it.entry->firstClusterHi << 16;
 
@@ -182,17 +179,16 @@ int main(int count, char* args[])
 
             if (it.entry->attributes & FAT32_ATTRIBUTES_DIRECTORY)
             {
-                printf("%s/ (starting cluster = %" PRIu32 ")\n",
-                    buffer, firstCluster);
-
-                continue;
+                printf("/ (starting cluster = %" PRIu32, firstCluster);
             }
-
-            printf("%s (size = %" PRIu32, buffer, it.entry->fileSize);
-
-            if (it.entry->fileSize)
+            else
             {
-                printf(", starting cluster = %" PRIu32, firstCluster);
+                printf(" (size = %" PRIu32, it.entry->fileSize);
+
+                if (it.entry->fileSize)
+                {
+                    printf(", starting cluster = %" PRIu32, firstCluster);
+                }
             }
 
             printf(")\n");
