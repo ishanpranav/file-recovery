@@ -29,4 +29,6 @@ typedef struct VolumeRootIterator* VolumeRootIterator;
  * @param instance the volume whose root directory entries to iterate.
 */
 void volume_root_begin(VolumeRootIterator iterator, Volume instance);
+
+
 void volume_root_next(VolumeRootIterator iterator);

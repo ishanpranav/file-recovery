@@ -133,7 +133,7 @@ void volume_root_begin(VolumeRootIterator iterator, Volume instance)
     //     ((BPB_RootEntCnt * 32) + (BPB_BytsPerSec – 1)) / BPB_BytsPerSec;
 
     uint32_t rootSectors = bootSector->rootEntries;
-    
+
     rootSectors *= sizeof(struct Fat32DirectoryEntry);
     rootSectors += bootSector->bytesPerSector - 1;
     rootSectors /= bootSector->bytesPerSector;
@@ -168,7 +168,7 @@ void volume_root_next(VolumeRootIterator iterator)
     if (iterator->offset < iterator->bytesPerCluster - step)
     {
         iterator->offset += step;
-        
+
         uint8_t* pointer = iterator->data + iterator->offset;
 
         iterator->entry = (Fat32DirectoryEntry)pointer;
@@ -177,46 +177,41 @@ void volume_root_next(VolumeRootIterator iterator)
         return;
     }
 
-    uint32_t cluster = iterator->cluster;
-    Fat32BootSector bootSector = iterator->instance->data;
-
-    if (!fat32_is_eof(cluster))
+    if (fat32_is_eof(iterator->cluster))
     {
-        // From specification:
-        //   FATOffset = N * 4;
-
-        uint32_t fatOffset = cluster * 4;
-
-        // From specification:
-        //   ThisFATSecNum = BPB_ResvdSecCnt + (FATOffset / BPB_BytsPerSec);
-
-        uint32_t fatSector = bootSector->reservedSectors;
-
-        fatSector += fatOffset / bootSector->bytesPerSector;
-
-        uint32_t fatEntryOffset = fatOffset % bootSector->bytesPerSector;
-
-        // From specification:
-        //   FAT32ClusEntryVal =
-        //     (*((DWORD *) &SecBuff[ThisFATEntOffset])) & 0x0FFFFFFF;
-
-        uint8_t* sectorBuffer = iterator->instance->data;
-
-        sectorBuffer += fatSector * bootSector->bytesPerSector;
-        cluster = *(uint32_t*)(sectorBuffer + fatEntryOffset) & 0x0fffffff;
-        iterator->cluster = cluster;
-
-        volume_root_reset_offset(iterator);
-
-        uint8_t* pointer = iterator->data + iterator->offset;
-
-        iterator->entry = (Fat32DirectoryEntry)pointer;
-        iterator->end = false;
+        iterator->end = true;
 
         return;
     }
 
-    iterator->end = true;
+    // From specification:
+    //   FATOffset = N * 4;
+
+    uint32_t fatOffset = iterator->cluster * 4;
+
+    // From specification:
+    //   ThisFATSecNum = BPB_ResvdSecCnt + (FATOffset / BPB_BytsPerSec);
+
+    Fat32BootSector bootSector = iterator->instance->data;
+    uint32_t fatSector = bootSector->reservedSectors;
+
+    fatSector += fatOffset / bootSector->bytesPerSector;
+
+    uint32_t fatEntryOffset = fatOffset % bootSector->bytesPerSector;
+
+    // From specification:
+    //   FAT32ClusEntryVal =
+    //     (*((DWORD *) &SecBuff[ThisFATEntOffset])) & 0x0FFFFFFF;
+
+    uint8_t* buffer = iterator->instance->data;
+
+    buffer += fatSector * bootSector->bytesPerSector;
+    iterator->cluster = *(uint32_t*)(buffer + fatEntryOffset) & 0x0fffffff;
+
+    volume_root_reset_offset(iterator);
+
+    iterator->entry = (Fat32DirectoryEntry)(iterator->data + iterator->offset);
+    iterator->end = fat32_is_eof(iterator->cluster);
 }
 
 void finalize_volume(Volume instance)
