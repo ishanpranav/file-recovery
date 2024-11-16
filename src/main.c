@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "fat32_attributes.h"
 #include "fat32_boot_sector.h"
 #include "options.h"
 #include "volume_root_iterator.h"
@@ -150,14 +151,54 @@ int main(int count, char* args[])
 
     if (options & OPTIONS_LIST)
     {
-        // uint32_t entries = 0;
+        uint32_t entries = 0;
         struct VolumeRootIterator it;
 
-        volume_begin(&it, &disk);
-        // for (volume_begin(&it, &disk); volume_next(&it); entries++)
-        // {
-        //     printf("entry\n");
-        // }
+        for (volume_root_begin(&it, &disk); !it.end; volume_root_next(&it))
+        {
+            if (fat32_directory_entry_is_mid_free(it.entry))
+            {
+                continue;
+            }
+
+            if (fat32_directory_entry_is_end_free(it.entry))
+            {
+                break;
+            }
+
+            if (it.entry->attributes & FAT32_ATTRIBUTES_HIDDEN)
+            {
+                continue;
+            }
+
+            char buffer[13];
+            
+            volume_get_display_name(buffer, it.entry->name);
+
+            uint32_t firstCluster = it.entry->firstClusterHi << 16;
+
+            firstCluster |= it.entry->firstClusterLo;
+            entries++;
+
+            if (it.entry->attributes & FAT32_ATTRIBUTES_DIRECTORY)
+            {
+                printf("%s/ (starting cluster = %" PRIu32 ")\n",
+                    buffer, firstCluster);
+
+                continue;
+            }
+
+            printf("%s (size = %" PRIu32, buffer, it.entry->fileSize);
+
+            if (it.entry->fileSize)
+            {
+                printf(", starting cluster = %" PRIu32, firstCluster);
+            }
+
+            printf(")\n");
+        }
+
+        printf("Total number of entries = %" PRIu32 "\n", entries);
     }
 
     result = EXIT_SUCCESS;

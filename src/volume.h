@@ -18,13 +18,22 @@ typedef struct Volume* Volume;
 /**
  * Initializes an instance of the `Volume` struct.
  * 
- * @param instance the `Volume` instance
+ * @param instance the `Volume` instance.
  * @param path     a pointer to a zero-terminated string containing the path to
- *                 the disk image
+ *                 the disk image.
  * @return `true` if the operation succeeded; otherwise `false`. When `false`,
  *         `errno` is assigned to indicate the error.
  */
 bool volume(Volume instance, char* path);
+
+/**
+ * Converts a short directory entry name to a short display name.
+ * 
+ * @param buffer when this method returns, contains the short display name as a
+ *               zero-terminated string. This argument is passed uninitialized.
+ * @param name   the directory entry name.
+ */
+void volume_get_display_name(char buffer[13], uint8_t name[11]);
 
 /**
  * Frees all resources.

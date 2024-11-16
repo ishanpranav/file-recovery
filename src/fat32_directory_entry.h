@@ -10,7 +10,7 @@
  * test if a directory is free, test both `fat32_directory_entry_is_mid_free`
  * and `fat32_directory_entry_is_end_free`.
  * 
- * @param value the value to test
+ * @param value the value to test.
  * @return `true` if `value` is an `0xe5` free entry; otherwise, `false`.
  */
 #define fat32_directory_entry_is_mid_free(value) ((value)->name[0] == 0xe5)
@@ -20,7 +20,7 @@
  * test if a directory is free, test both `fat32_directory_entry_is_mid_free`
  * and `fat32_directory_entry_is_end_free`.
  * 
- * @param value the value to test
+ * @param value the value to test.
  * @return `true` if `value` is an `0x00` free entry; otherwise, `false`.
  */
 #define fat32_directory_entry_is_end_free(value) (!(value)->name[0])

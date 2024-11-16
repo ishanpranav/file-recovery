@@ -16,9 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "fat32.h"
-#include "fat32_attributes.h"
 #include "fat32_boot_sector.h"
-#include "fat32_directory_entry.h"
 #include "volume_root_iterator.h"
 
 bool volume(Volume instance, char* path)
@@ -74,7 +72,7 @@ void volume_get_display_name(char buffer[13], uint8_t name[11])
     {
         buffer[0] = (char)0xe5;
     }
-    
+
     while (end > buffer && (*end == '\0' || *end == 0x20))
     {
         end--;
@@ -105,11 +103,28 @@ void volume_get_display_name(char buffer[13], uint8_t name[11])
     *end = '\0';
 }
 
-#include <assert.h>
-#include <stdio.h>
-#include <inttypes.h>
-void volume_begin(VolumeRootIterator iterator, Volume instance)
+static void volume_root_reset_offset(VolumeRootIterator iterator)
 {
+    Fat32BootSector bootSector = iterator->instance->data;
+
+    // From specification:
+    //   FirstSectorofCluster = ((N – 2) * BPB_SecPerClus) + FirstDataSector;
+
+    uint32_t sector = (iterator->cluster - 2) * bootSector->sectorsPerCluster;
+
+    sector += iterator->firstDataSector;
+
+    uint8_t* data = iterator->instance->data;
+
+    data += sector * bootSector->bytesPerSector;
+    iterator->offset = 0;
+    iterator->data = data;
+}
+
+void volume_root_begin(VolumeRootIterator iterator, Volume instance)
+{
+    iterator->instance = instance;
+
     Fat32BootSector bootSector = instance->data;
 
     // From specification:
@@ -117,8 +132,9 @@ void volume_begin(VolumeRootIterator iterator, Volume instance)
     //   RootDirSectors =
     //     ((BPB_RootEntCnt * 32) + (BPB_BytsPerSec – 1)) / BPB_BytsPerSec;
 
-    uint32_t rootSectors = (bootSector->rootEntries * 32);
-
+    uint32_t rootSectors = bootSector->rootEntries;
+    
+    rootSectors *= sizeof(struct Fat32DirectoryEntry);
     rootSectors += bootSector->bytesPerSector - 1;
     rootSectors /= bootSector->bytesPerSector;
 
@@ -132,72 +148,40 @@ void volume_begin(VolumeRootIterator iterator, Volume instance)
     firstDataSector += bootSector->fats * bootSector->sectorsPerFat;
     firstDataSector += rootSectors;
 
-    // From specification:
-    //   FirstSectorofCluster = ((N – 2) * BPB_SecPerClus) + FirstDataSector;
+    uint32_t bytesPerCluster = bootSector->sectorsPerCluster;
 
-    uint32_t cluster = bootSector->rootCluster;
-    uint32_t entries = 0;
+    bytesPerCluster *= bootSector->bytesPerSector;
+    iterator->cluster = bootSector->rootCluster;
+    iterator->firstDataSector = firstDataSector;
+    iterator->bytesPerCluster = bytesPerCluster;
 
-    while (!fat32_is_eof(cluster))
+    volume_root_reset_offset(iterator);
+
+    iterator->entry = (Fat32DirectoryEntry)(iterator->data + iterator->offset);
+    iterator->end = fat32_is_eof(iterator->cluster);
+}
+
+void volume_root_next(VolumeRootIterator iterator)
+{
+    uint32_t step = sizeof(struct Fat32DirectoryEntry);
+
+    if (iterator->offset < iterator->bytesPerCluster - step)
     {
-        uint32_t sector = (cluster - 2) * bootSector->sectorsPerCluster;
-
-        sector += firstDataSector;
-
-        uint8_t* data = instance->data;
+        iterator->offset += step;
         
-        data += sector * bootSector->bytesPerSector;
+        uint8_t* pointer = iterator->data + iterator->offset;
 
-        char buffer[13];
-        uint32_t bytesPerCluster = bootSector->sectorsPerCluster;
-        
-        bytesPerCluster *= bootSector->bytesPerSector;
+        iterator->entry = (Fat32DirectoryEntry)pointer;
+        iterator->end = false;
 
-        for (uint32_t offset = 0; offset < bytesPerCluster; offset += sizeof(struct Fat32DirectoryEntry))
-        {
-            Fat32DirectoryEntry entry = (Fat32DirectoryEntry)(data + offset);
+        return;
+    }
 
-            if (fat32_directory_entry_is_mid_free(entry))
-            {
-                continue;
-            }
+    uint32_t cluster = iterator->cluster;
+    Fat32BootSector bootSector = iterator->instance->data;
 
-            if (fat32_directory_entry_is_end_free(entry))
-            {
-                goto volume_begin_exit;
-            }
-
-            volume_get_display_name(buffer, entry->name);
-
-            uint32_t firstCluster = entry->firstClusterHi << 16;
-            
-            firstCluster |= entry->firstClusterLo;
-
-            if (entry->attributes & FAT32_ATTRIBUTES_HIDDEN)
-            {
-                continue;
-            }
-            
-            entries++;
-
-            if (entry->attributes & FAT32_ATTRIBUTES_DIRECTORY)
-            {
-                printf("%s/ (starting cluster = %" PRIu32 ")\n",
-                    buffer, firstCluster);
-
-                continue;
-            }
-            
-            printf("%s (size = %" PRIu32, buffer, entry->fileSize);
-            
-            if (entry->fileSize)
-            {
-                printf(", starting cluster = %" PRIu32, firstCluster);
-            }
-
-            printf(")\n");
-        }
-
+    if (!fat32_is_eof(cluster))
+    {
         // From specification:
         //   FATOffset = N * 4;
 
@@ -216,19 +200,23 @@ void volume_begin(VolumeRootIterator iterator, Volume instance)
         //   FAT32ClusEntryVal =
         //     (*((DWORD *) &SecBuff[ThisFATEntOffset])) & 0x0FFFFFFF;
 
-        uint8_t* sectorBuffer = instance->data;
+        uint8_t* sectorBuffer = iterator->instance->data;
 
         sectorBuffer += fatSector * bootSector->bytesPerSector;
         cluster = *(uint32_t*)(sectorBuffer + fatEntryOffset) & 0x0fffffff;
+        iterator->cluster = cluster;
+
+        volume_root_reset_offset(iterator);
+
+        uint8_t* pointer = iterator->data + iterator->offset;
+
+        iterator->entry = (Fat32DirectoryEntry)pointer;
+        iterator->end = false;
+
+        return;
     }
 
-volume_begin_exit:
-    printf("Total number of entries = %" PRIu32 "\n", entries);
-}
-
-bool volume_next(VolumeRootIterator iterator)
-{
-    return false; // TODO: implement volume_next
+    iterator->end = true;
 }
 
 void finalize_volume(Volume instance)
