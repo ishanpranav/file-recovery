@@ -11,7 +11,9 @@
 
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <ctype.h>
 #include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
 #include "fat32_boot_sector.h"
 #include "fat32_directory_entry.h"
@@ -57,8 +59,48 @@ volume_exit_open:
 volume_exit:
     return result;
 }
+
+void volume_get_display_name(char buffer[13], uint8_t name[11])
+{
+    char* end = buffer;
+    
+    memcpy(end, name, 8);
+    
+    end += 7;
+
+    while (end > buffer && (*end == '\0' || *end == ' '))
+    {
+        end--;
+    }
+
+    end++;
+    *end = '.';
+
+    char* extension = end;
+
+    end++;
+
+    memcpy(end, name + 8, 3);
+
+    end += 2;
+
+    while (end >= extension && (*end == '\0' || *end == ' '))
+    {
+        end--;
+    }
+
+    if (end == extension && *end == '.')
+    {
+        end--;
+    }
+
+    end++;
+    *end = '\0';
+}
+
 #include <assert.h>
 #include <stdio.h>
+#include <inttypes.h>
 void volume_begin(VolumeRootIterator iterator, Volume instance)
 {
     Fat32BootSector bootSector = instance->data;
@@ -101,7 +143,13 @@ void volume_begin(VolumeRootIterator iterator, Volume instance)
 
     Fat32DirectoryEntry entry = (Fat32DirectoryEntry)data;
 
-    printf("'%s'\n", entry->name);
+    char buffer[13];
+
+    volume_get_display_name(buffer, entry->name);
+    printf("'%s' (size = %" PRIu32 ", starting cluster = %" PRIu32 ")\n",
+        buffer,
+        entry->fileSize,
+        (entry->firstClusterHi << 16) | entry->firstClusterLo);
 }
 
 bool volume_next(VolumeRootIterator iterator)
