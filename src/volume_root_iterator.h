@@ -30,5 +30,9 @@ typedef struct VolumeRootIterator* VolumeRootIterator;
 */
 void volume_root_begin(VolumeRootIterator iterator, Volume instance);
 
-
+/**
+ * Advances the iterator to the next directory entry.
+ * 
+ * @param iterator the iterator.
+ */
 void volume_root_next(VolumeRootIterator iterator);
