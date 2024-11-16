@@ -1,0 +1,21 @@
+// fat32_attributes.h
+// Copyright (c) 2024 Ishan Pranav
+// Licensed under the MIT license.
+
+enum Fat32Attributes
+{
+    FAT32_ATTRIBUTES_NONE = 0x00,
+    FAT32_ATTRIBUTES_READ_ONLY = 0x01,
+    FAT32_ATTRIBUTES_HIDDEN = 0x02,
+    FAT32_ATTRIBUTES_SYSTEM = 0x04,
+    FAT32_ATTRIBUTES_VOLUME_ID = 0x08,
+    FAT32_ATTRIBUTES_DIRECTORY = 0x10,
+    FAT32_ATTRIBUTES_ARCHIVE = 0x20,
+    FAT32_ATTRIBUTES_LONG_NAME =
+        FAT32_ATTRIBUTES_READ_ONLY |
+        FAT32_ATTRIBUTES_HIDDEN |
+        FAT32_ATTRIBUTES_SYSTEM |
+        FAT32_ATTRIBUTES_VOLUME_ID
+};
+
+typedef enum Fat32Attributes Fat32Attributes;

@@ -5,6 +5,26 @@
 #include <stdint.h>
 #pragma pack(push, 1)
 
+/**
+ * Determines whether a given entry is a mid-directory free entry (`0xe5`). To
+ * test if a directory is free, test both `fat32_directory_entry_is_mid_free`
+ * and `fat32_directory_entry_is_end_free`.
+ * 
+ * @param value the value to test
+ * @return `true` if `value` is an `0xe5` free entry; otherwise, `false`.
+ */
+#define fat32_directory_entry_is_mid_free(value) ((value)->name[0] == 0xe5)
+
+/**
+ * Determines whether a given entry is an end-directory free entry (`0x00`). To
+ * test if a directory is free, test both `fat32_directory_entry_is_mid_free`
+ * and `fat32_directory_entry_is_end_free`.
+ * 
+ * @param value the value to test
+ * @return `true` if `value` is an `0x00` free entry; otherwise, `false`.
+ */
+#define fat32_directory_entry_is_end_free(value) (!(value)->name[0])
+
 /** Represents a Microsoft FAT32 directory entry. */
 struct Fat32DirectoryEntry
 {

@@ -150,7 +150,7 @@ int main(int count, char* args[])
 
     if (options & OPTIONS_LIST)
     {
-        uint32_t entries = 0;
+        // uint32_t entries = 0;
         struct VolumeRootIterator it;
 
         volume_begin(&it, &disk);
@@ -158,8 +158,6 @@ int main(int count, char* args[])
         // {
         //     printf("entry\n");
         // }
-
-        printf("Total number of entries = %" PRIu32 "\n", entries);
     }
 
     result = EXIT_SUCCESS;

@@ -12,8 +12,8 @@ CFLAGS=-D_POSIX_C_SOURCE=2 -O3 -pedantic -std=c99 -Wall -Wextra
 
 all: nyufile
 
-nyufile: main.c fat32.h fat32_boot_sector.h fat32_directory_entry.h options.h \
-	volume
+nyufile: main.c fat32.h fat32_attributes.h fat32_boot_sector.h \
+	fat32_directory_entry.h options.h volume
 	$(CC) $(CFLAGS) *.o main.c -o nyufile
 
 volume: volume.c volume.h
