@@ -168,13 +168,28 @@ void volume_begin(VolumeRootIterator iterator, Volume instance)
             }
 
             volume_get_display_name(buffer, entry->name);
-            printf("%s%s (size = %" PRIu32 ", starting cluster = %" PRIu32 ")\n",
-                buffer,
-                entry->attributes & FAT32_ATTRIBUTES_DIRECTORY ? "/" : "",
-                entry->fileSize,
-                (entry->firstClusterHi << 16) | entry->firstClusterLo);
 
+            uint32_t firstCluster = entry->firstClusterHi << 16;
+            
+            firstCluster |= entry->firstClusterLo;
             entries++;
+
+            if (entry->attributes & FAT32_ATTRIBUTES_DIRECTORY)
+            {
+                printf("%s/ (starting cluster = %" PRIu32 ")\n",
+                    buffer, firstCluster);
+
+                continue;
+            }
+            
+            printf("%s (size = %" PRIu32, buffer, entry->fileSize);
+            
+            if (entry->fileSize)
+            {
+                printf(", starting cluster = %" PRIu32, firstCluster);
+            }
+
+            printf(")\n");
         }
 
         // From specification:
