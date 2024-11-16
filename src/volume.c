@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "fat32_boot_sector.h"
+#include "fat32_directory_entry.h"
 #include "volume_root_iterator.h"
 
 bool volume(Volume instance, char* path)
@@ -56,7 +57,8 @@ volume_exit_open:
 volume_exit:
     return result;
 }
-
+#include <assert.h>
+#include <stdio.h>
 void volume_begin(VolumeRootIterator iterator, Volume instance)
 {
     Fat32BootSector bootSector = instance->data;
@@ -65,11 +67,11 @@ void volume_begin(VolumeRootIterator iterator, Volume instance)
 
     //   RootDirSectors =
     //     ((BPB_RootEntCnt * 32) + (BPB_BytsPerSec – 1)) / BPB_BytsPerSec;
-    
-    uint32_t rootDirectorySectors = (bootSector->rootEntries * 32);
 
-    rootDirectorySectors += bootSector->bytesPerSector - 1;
-    rootDirectorySectors /= bootSector->bytesPerSector;
+    uint32_t rootSectors = (bootSector->rootEntries * 32);
+
+    rootSectors += bootSector->bytesPerSector - 1;
+    rootSectors /= bootSector->bytesPerSector;
 
     // From specification:
 
@@ -78,21 +80,28 @@ void volume_begin(VolumeRootIterator iterator, Volume instance)
 
     uint32_t firstDataSector = bootSector->reservedSectors;
 
-    firstDataSector += (bootSector->fats * bootSector->fatSize);
-    firstDataSector += rootDirectorySectors;
+    firstDataSector += bootSector->fats * bootSector->sectorsPerFat;
+    firstDataSector += rootSectors;
 
     // From specification:
     //   FirstSectorofCluster = ((N – 2) * BPB_SecPerClus) + FirstDataSector;
 
     uint32_t cluster = bootSector->rootCluster;
     uint32_t sector = (cluster - 2) * bootSector->sectorsPerCluster;
-    
+
     sector += firstDataSector;
 
-    char* data = iterator->instance->data;
-    
+    // uint32_t bytesPerCluster = bootSector->sectorsPerCluster;
+
+    // bytesPerCluster *= bootSector->bytesPerSector;
+
+    uint8_t* data = instance->data;
+
     data += sector * bootSector->bytesPerSector;
-    
+
+    Fat32DirectoryEntry entry = (Fat32DirectoryEntry)data;
+
+    printf("'%s'\n", entry->name);
 }
 
 bool volume_next(VolumeRootIterator iterator)

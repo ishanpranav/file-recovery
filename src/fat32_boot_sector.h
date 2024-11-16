@@ -128,7 +128,7 @@ struct Fat32BootSector
      * 
      * This corresponds to the `BPB_FATSz32` field.
      */
-    uint32_t fatSize;
+    uint32_t sectorsPerFat;
 
     /**
      * Specifies a bitwise combination of flags. Bits 0 to 3: specifies the

@@ -153,10 +153,11 @@ int main(int count, char* args[])
         uint32_t entries = 0;
         struct VolumeRootIterator it;
 
-        for (volume_begin(&it, &disk); volume_next(&it); entries++)
-        {
-            printf("entry\n");
-        }
+        volume_begin(&it, &disk);
+        // for (volume_begin(&it, &disk); volume_next(&it); entries++)
+        // {
+        //     printf("entry\n");
+        // }
 
         printf("Total number of entries = %" PRIu32 "\n", entries);
     }
