@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "fat32_boot_sector.h"
 #include "options.h"
 #include "volume_root_iterator.h"
 
@@ -132,7 +133,7 @@ int main(int count, char* args[])
         goto main_exit;
     }
 
-    Fat32BootSector bootSector = disk.bootSector;
+    Fat32BootSector bootSector = disk.data;
 
     if (options & OPTIONS_INFORMATION)
     {
