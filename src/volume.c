@@ -72,7 +72,7 @@ void volume_get_display_name(char buffer[13], uint8_t name[11])
 
     if (buffer[0] == 0x05)
     {
-        buffer[0] = 0xe5;
+        buffer[0] = (char)0xe5;
     }
     
     while (end > buffer && (*end == '\0' || *end == 0x20))
@@ -172,6 +172,12 @@ void volume_begin(VolumeRootIterator iterator, Volume instance)
             uint32_t firstCluster = entry->firstClusterHi << 16;
             
             firstCluster |= entry->firstClusterLo;
+
+            if (entry->attributes & FAT32_ATTRIBUTES_HIDDEN)
+            {
+                continue;
+            }
+            
             entries++;
 
             if (entry->attributes & FAT32_ATTRIBUTES_DIRECTORY)
