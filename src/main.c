@@ -6,14 +6,25 @@
 //  - https://www.man7.org/linux/man-pages/man3/getopt.3.html
 //  - https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html
 
-#include <inttypes.h>
+//  - https://unix.stackexchange.com/questions/454962/mounting-volume-partition-with-permissions-for-user
+//  - https://superuser.com/questions/320415/mount-device-with-specific-user-rights
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "fat32_attributes.h"
 #include "fat32_boot_sector.h"
 #include "options.h"
+#include "utility.h"
 #include "volume_root_iterator.h"
+
+static const Utility UTILITIES_BY_OPTIONS[] =
+{
+    [OPTIONS_INFORMATION] = information_utility,
+    [OPTIONS_LIST] = list_utility,
+    [OPTIONS_RECOVER_CONTIGUOUS] = recover_contiguous_utility,
+    // [OPTIONS_RECOVER_NON_CONTIGUOUS] = recover_non_contiguous_utility
+};
 
 static void main_print_usage(char* app)
 {
@@ -134,67 +145,12 @@ int main(int count, char* args[])
         goto main_exit;
     }
 
-    Fat32BootSector bootSector = disk.data;
-
-    if (options & OPTIONS_INFORMATION)
+    for (Options mask = 0x8; mask; mask >>= 1)
     {
-        printf(
-            "Number of FATs = %" PRId8 "\n"
-            "Number of bytes per sector = %" PRId8 "\n"
-            "Number of sectors per cluster = %" PRId8 "\n"
-            "Number of reserved sectors = %" PRId8 "\n",
-            bootSector->fats,
-            bootSector->bytesPerSector,
-            bootSector->sectorsPerCluster,
-            bootSector->reservedSectors);
-    }
-
-    if (options & OPTIONS_LIST)
-    {
-        uint32_t entries = 0;
-        struct VolumeRootIterator it;
-
-        for (volume_root_begin(&it, &disk); !it.end; volume_root_next(&it))
+        if (options & mask)
         {
-            if (fat32_directory_entry_is_end_free(it.entry))
-            {
-                break;
-            }
-
-            if (fat32_directory_entry_is_mid_free(it.entry) ||
-                it.entry->attributes & FAT32_ATTRIBUTES_HIDDEN)
-            {
-                continue;
-            }
-
-            char buffer[13];
-
-            volume_get_display_name(buffer, it.entry->name);
-            printf("%s", buffer);
-
-            uint32_t firstCluster = it.entry->firstClusterHi << 16;
-
-            firstCluster |= it.entry->firstClusterLo;
-            entries++;
-
-            if (it.entry->attributes & FAT32_ATTRIBUTES_DIRECTORY)
-            {
-                printf("/ (starting cluster = %" PRIu32, firstCluster);
-            }
-            else
-            {
-                printf(" (size = %" PRIu32, it.entry->fileSize);
-
-                if (it.entry->fileSize)
-                {
-                    printf(", starting cluster = %" PRIu32, firstCluster);
-                }
-            }
-
-            printf(")\n");
+            UTILITIES_BY_OPTIONS[mask](stdout, &disk, recover, sha1);
         }
-
-        printf("Total number of entries = %" PRIu32 "\n", entries);
     }
 
     result = EXIT_SUCCESS;

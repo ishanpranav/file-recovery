@@ -2,8 +2,11 @@
 // Copyright (c) 2024 Ishan Pranav
 // Licensed under the MIT license.
 
+#ifndef VOLUME_H
+#define VOLUME_H
 #include <sys/types.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /** Represents a FAT32 disk image. */
 struct Volume
@@ -42,3 +45,5 @@ void volume_get_display_name(char buffer[13], uint8_t name[11]);
  *                 argument.
  */
 void finalize_volume(Volume instance);
+
+#endif

@@ -1,5 +1,7 @@
 # File recovery
-This is a FAT32 file recovery application implementation for the NYU CSCI 202 Operating Systems course.
+
+This is a FAT32 file recovery application implementation for the NYU CSCI 202
+Operating Systems course.
 
 ## License
 

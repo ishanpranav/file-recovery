@@ -1,0 +1,54 @@
+// utility.h
+// Copyright (c) 2024 Ishan Pranav
+// Licensed under the MIT license.
+
+#include <stdio.h>
+#include "volume.h"
+#ifdef __GNUC__
+#define UTILITY_UNUSED __attribute__ ((unused))
+#else
+#define UTILITY_UNUSED
+#endif
+
+/** Represents a file-system utility. */
+typedef void (*Utility)(FILE* output, Volume volume, char* recover, char* sha1);
+
+/**
+ * Prints the file system information.
+ * 
+ * @param output  the output stream.
+ * @param volume  the FAT32 disk image.
+ * @param recover unused.
+ * @param sha1    unused.
+ */
+void information_utility(
+    FILE* output, 
+    Volume volume, 
+    char* recover, 
+    char* sha1);
+
+/**
+ * Lists the entries in the root directory.
+ * 
+ * @param output  the output stream.
+ * @param volume  the FAT32 disk image.
+ * @param recover unused.
+ * @param sha1    unused.
+ */
+void list_utility(FILE* output, Volume volume, char* recover, char* sha1);
+
+/**
+ * Recovers a contiguous file.
+ * 
+ * @param output  the output stream.
+ * @param volume  the FAT32 disk image.
+ * @param recover a pointer to a zero-terminated string containing the name of
+ *                the file to recover.
+ * @param sha1    a pointer to a zero-terminated string containing the SHA1
+ *                hash digest of the file, or `NULL`.
+ */
+void recover_contiguous_utility(
+    FILE* output, 
+    Volume volume, 
+    char* recover, 
+    char* sha1);
