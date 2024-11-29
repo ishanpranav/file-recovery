@@ -37,12 +37,19 @@ void recover_contiguous_utility(
         if (candidate)
         {
             fprintf(output, "%s: multiple candidates found\n", recover);
-        
+
             return;
         }
 
         candidate = true;
-
-        break;
     }
+
+    if (!candidate)
+    {
+        printf("%s: file not found\n", recover);
+
+        return;
+    }
+
+    printf("%s: successfully recovered\n", recover);
 }
