@@ -16,6 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "fat32.h"
+#include "fat32_attributes.h"
 #include "fat32_boot_sector.h"
 #include "volume_root_iterator.h"
 
@@ -212,6 +213,49 @@ void volume_root_next(VolumeRootIterator iterator)
 
     iterator->entry = (Fat32DirectoryEntry)(iterator->data + iterator->offset);
     iterator->end = fat32_is_eof(iterator->cluster);
+}
+
+bool volume_root_first(VolumeRootIterator iterator, const char* fileName)
+{
+    for (; !iterator->end; volume_root_next(iterator))
+    {
+        if (iterator->entry->attributes & FAT32_ATTRIBUTES_DIRECTORY ||
+            !(fat32_directory_entry_is_end_free(iterator->entry) &&
+                fat32_directory_entry_is_mid_free(iterator->entry)))
+        {
+            continue;
+        }
+
+        char buffer[13];
+
+        volume_get_display_name(buffer, iterator->entry->name);
+
+        if (strcmp((char*)(iterator->entry->name + 1), fileName + 1) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+VolumeFindResult volume_root_single(
+    VolumeRootIterator iterator,
+    const char* fileName)
+{
+    if (!volume_root_first(iterator, fileName))
+    {
+        return VOLUME_FIND_RESULT_NOT_FOUND;
+    }
+
+    struct VolumeRootIterator copy = *iterator;
+
+    if (volume_root_first(&copy, fileName))
+    {
+        return VOLUME_FIND_RESULT_MULTIPLE_FOUND;
+    }
+
+    return VOLUME_FIND_RESULT_OK;
 }
 
 void finalize_volume(Volume instance)

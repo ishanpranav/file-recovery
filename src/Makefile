@@ -14,7 +14,7 @@ all: nyufile
 
 nyufile: main.c fat32.h fat32_attributes.h fat32_boot_sector.h \
 	fat32_directory_entry.h options.h information_utility list_utility \
-	recover_contiguous_utility volume
+	recover_contiguous_utility volume volume_find_result
 	$(CC) $(CFLAGS) *.o main.c -o nyufile
 
 information_utility: information_utility.c utility.h
@@ -32,5 +32,8 @@ recover_contiguous_utility: recover_contiguous_utility.c utility.h
 volume: volume.c volume.h
 	$(CC) $(CFLAGS) -c volume.c
 
+volume_find_result: volume_find_result.c volume_find_result.h
+	$(CC) $(CFLAGS) -c volume_find_result.c
+	
 clean:
 	rm -f *.o nyufile a.out

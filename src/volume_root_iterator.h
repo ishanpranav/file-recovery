@@ -4,6 +4,7 @@
 
 #include "fat32_directory_entry.h"
 #include "volume.h"
+#include "volume_find_result.h"
 
 /** Iterates over the entries in the root directory of a volume. */
 struct VolumeRootIterator
@@ -36,3 +37,22 @@ void volume_root_begin(VolumeRootIterator iterator, Volume instance);
  * @param iterator the iterator.
  */
 void volume_root_next(VolumeRootIterator iterator);
+
+/**
+ * 
+ * @param iterator
+ * @param fileName
+ * @return
+ */
+bool volume_root_first(VolumeRootIterator iterator, const char* fileName);
+
+/**
+ * 
+ * @param result
+ * @param iterator
+ * @param fileName
+ * @return
+*/
+VolumeFindResult volume_root_single(
+    VolumeRootIterator iterator,
+    const char* fileName);
