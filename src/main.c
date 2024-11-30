@@ -65,7 +65,9 @@ int main(int count, char* args[])
 
     int option;
     char* recover = NULL;
-    char* sha1String = "";
+    char* sha1String = NULL;
+    int length = 0;
+    unsigned char digest[SHA_DIGEST_LENGTH];
     Options options = OPTIONS_NONE;
 
     while ((option = getopt(count - 1, args + 1, ":ilr:R:s:")) != -1)
@@ -114,6 +116,12 @@ int main(int count, char* args[])
 
                 goto main_exit;
             }
+            
+            while (length < SHA_DIGEST_LENGTH && 
+                sscanf(sha1String + 2 * length, "%2hhx", digest + length) == 1)
+            {
+                length++;
+            }
             break;
 
         default:
@@ -143,14 +151,16 @@ int main(int count, char* args[])
 
         goto main_exit;
     }
-
-    int i = 0;
-    unsigned char sha1[SHA_DIGEST_LENGTH] = VOLUME_SHA1_NONE;
     
-    while (i < SHA_DIGEST_LENGTH && 
-        sscanf(sha1String + 2 * i, "%2hhx", sha1 + i) == 1)
+    unsigned char* sha1;
+
+    if (length)
     {
-        i++;
+        sha1 = digest;
+    }
+    else
+    {
+        sha1 = NULL;
     }
 
     for (Options mask = 0x8; mask; mask >>= 1)

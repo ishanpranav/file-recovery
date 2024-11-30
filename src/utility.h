@@ -2,6 +2,7 @@
 // Copyright (c) 2024 Ishan Pranav
 // Licensed under the MIT license.
 
+#include <openssl/sha.h>
 #include <stdio.h>
 #include "volume.h"
 #ifdef __GNUC__
@@ -52,7 +53,7 @@ void list_utility(
  * @param volume  the FAT32 disk image.
  * @param recover a pointer to a zero-terminated string containing the name of
  *                the file to recover.
- * @param sha1    the SHA1 hash digest of the file, or `VOLUME_SHA1_NONE`.
+ * @param sha1    the SHA1 hash digest of the file, or `NULL`.
  */
 void recover_contiguous_utility(
     FILE* output,

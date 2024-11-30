@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "fat32_attributes.h"
@@ -69,7 +70,7 @@ volume_exit:
     return result;
 }
 
-void volume_get_display_name(char buffer[13], uint8_t name[11])
+void volume_display_name(char buffer[13], uint8_t name[11])
 {
     if (*name == 0x20)
     {
@@ -117,6 +118,11 @@ void volume_get_display_name(char buffer[13], uint8_t name[11])
 
     end++;
     *end = '\0';
+}
+
+uint32_t volume_clusters(uint32_t fileSize, uint32_t bytesPerCluster)
+{
+    return (fileSize + bytesPerCluster - 1) / bytesPerCluster;
 }
 
 static void volume_root_reset_offset(VolumeRootIterator* iterator)
@@ -256,8 +262,6 @@ VolumeFindResult volume_root_first_free(
     {
         return VOLUME_FIND_RESULT_NOT_FOUND;
     }
-    
-    bool hasSha1 = memcmp(sha1, VOLUME_SHA1_NONE, SHA_DIGEST_LENGTH) != 0;
 
     for (; !iterator->end; volume_root_next(iterator))
     {
@@ -272,11 +276,11 @@ VolumeFindResult volume_root_first_free(
 
         char buffer[13];
 
-        volume_get_display_name(buffer, iterator->entry->name);
+        volume_display_name(buffer, iterator->entry->name);
 
         if (*buffer != '\0' && strcmp(buffer + 1, fileName + 1) == 0)
         {
-            if (!hasSha1)
+            if (!sha1)
             {
                 return VOLUME_FIND_RESULT_NAME_FOUND;
             }
@@ -284,7 +288,7 @@ VolumeFindResult volume_root_first_free(
             unsigned char digest[SHA_DIGEST_LENGTH];
 
             volume_hash_file(iterator, digest);
-            
+
             if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
             {
                 return VOLUME_FIND_RESULT_SHA1_FOUND;
@@ -319,6 +323,44 @@ VolumeFindResult volume_root_single_free(
     }
 
     return first;
+}
+#include <stdio.h>
+
+struct Chain
+{
+    uint32_t count;
+    uint32_t capacity;
+    uint32_t* items;
+};
+
+void volume_root_restore_contiguous(
+    VolumeRootIterator* iterator,
+    uint32_t firstCluster,
+    uint32_t clusters)
+{
+    void* data = iterator->instance->data;
+    Fat32BootSector* bootSector = data;
+    uint32_t lastCluster = firstCluster + clusters - 1;
+
+    for (uint32_t fat = 0; fat < bootSector->fats; fat++)
+    {
+        // From specification:
+        //   BPB_ResvdSecCnt + (BPB_NumFATs * FATSz)
+
+        uint32_t fatSector = bootSector->reservedSectors;
+
+        fatSector += fat * bootSector->sectorsPerFat;
+
+        uint32_t fatStartByte = fatSector * bootSector->bytesPerSector;
+        uint32_t* fatData = (uint32_t*)((uint8_t*)data + fatStartByte);
+
+        for (uint32_t cluster = firstCluster; cluster < lastCluster; cluster++)
+        {
+            fatData[cluster] = cluster + 1;
+        }
+
+        fatData[lastCluster] = VOLUME_EOF;
+    }
 }
 
 void finalize_volume(Volume* instance)

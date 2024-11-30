@@ -31,7 +31,7 @@ void list_utility(
 
         char buffer[13];
 
-        volume_get_display_name(buffer, it.entry->name);
+        volume_display_name(buffer, it.entry->name);
         fprintf(output, "%s", buffer);
 
         uint32_t lo = it.entry->firstClusterLo;

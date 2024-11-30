@@ -63,7 +63,7 @@ void volume_root_next(VolumeRootIterator* iterator);
  * @param fileName a pointer to a zero-terminated string containing the file
  *                 name to match. Note that the first character is ignored in
  *                 the comparison.
- * @param sha1     the SHA-1 digest to match, or `VOLUME_SHA1_NONE`.
+ * @param sha1     the SHA-1 digest to match, or `NULL`.
  * @return `VOLUME_FIND_RESULT_NAME_FOUND` if the iterator points to an entry
  *         with a matching name, `VOLUME_FIND_RESULT_SHA1_FOUND` if the
  *         iterator points to an entry with a matching digest, or
@@ -85,7 +85,7 @@ VolumeFindResult volume_root_first_free(
  * @param fileName a pointetr to a zero-terminated string containing the file
  *                 name to match. Note that the first character is ignored in
  *                 the comparison.
- * @param sha1     the SHA-1 digest to match, or `VOLUME_SHA1_NONE`.
+ * @param sha1     the SHA-1 digest to match, or `NULL`.
  * @return If the iterator points to an entry with a matching name, then
  *         `VOLUME_FIND_RESULT_NAME_FOUND`; if the iterator points to an entry
  *         with a matching digest, then `VOLUME_FIND_RESULT_SHA1_FOUND`; if the
@@ -97,3 +97,14 @@ VolumeFindResult volume_root_single_free(
     VolumeRootIterator* iterator,
     const char* fileName,
     unsigned char sha1[SHA_DIGEST_LENGTH]);
+
+/**
+ * 
+ * @param iterator
+ * @param firstCluster
+ * @param clusters
+ */
+void volume_root_restore_contiguous(
+    VolumeRootIterator* iterator,
+    uint32_t firstCluster,
+    uint32_t clusters);

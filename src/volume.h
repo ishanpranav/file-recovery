@@ -9,10 +9,7 @@
 #include <stdint.h>
 
 /** Specifies the SHA-1 hash digest length. */
-#define SHA_DIGEST_LENGTH 20
-
-/** Specifies the null or missing SHA-1 hash digest. */
-#define VOLUME_SHA1_NONE "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+// #define SHA_DIGEST_LENGTH 20
 
 // From specification:
 //   Microsoft operating system FAT drivers use the EOC value `0x0FFF` for FAT12
@@ -50,7 +47,15 @@ bool volume(Volume* instance, const char* path);
  *               zero-terminated string. This argument is passed uninitialized.
  * @param name   the directory entry name.
  */
-void volume_get_display_name(char buffer[13], uint8_t name[11]);
+void volume_display_name(char buffer[13], uint8_t name[11]);
+
+/**
+ * 
+ * @param fileSize
+ * @param bytesPerCluster
+ * @return 
+ */
+uint32_t volume_clusters(uint32_t fileSize, uint32_t bytesPerCluster);
 
 /**
  * Frees all resources.
