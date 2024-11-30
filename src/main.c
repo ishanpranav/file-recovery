@@ -4,6 +4,7 @@
 
 // References:
 //  - https://www.man7.org/linux/man-pages/man3/getopt.3.html
+//  - https://www.man7.org/linux/man-pages/man3/sscanf.3.html
 //  - https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html
 //  - https://stackoverflow.com/questions/3408706/hexadecimal-string-to-byte-array-in-c
 
@@ -143,8 +144,8 @@ int main(int count, char* args[])
         goto main_exit;
     }
 
-    unsigned char sha1[SHA_DIGEST_LENGTH] = VOLUME_SHA1_NONE;
     int i = 0;
+    unsigned char sha1[SHA_DIGEST_LENGTH] = VOLUME_SHA1_NONE;
     
     while (i < SHA_DIGEST_LENGTH && 
         sscanf(sha1String + 2 * i, "%2hhx", sha1 + i) == 1)

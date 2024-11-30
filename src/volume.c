@@ -8,6 +8,7 @@
 //  - https://www.man7.org/linux/man-pages/man2/mmap.2.html
 //  - https://www.man7.org/linux/man-pages/man2/open.2.html
 //  - https://www.man7.org/linux/man-pages/man3/stat.3type.html
+//  - https://docs.openssl.org/1.0.2/man3/sha
 //  - Microsoft Extensible Firmware Initiative FAT32 File System Specification
 
 #include <openssl/sha.h>
@@ -26,7 +27,6 @@
 //        IsEOF = TRUE;
 
 #define volume_is_eof(value) ((value) >= 0x0ffffff8)
-
 
 bool volume(Volume* instance, const char* path)
 {
