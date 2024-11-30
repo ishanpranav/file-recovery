@@ -29,17 +29,9 @@ void recover_contiguous_utility(
     VolumeFindResult find = volume_root_single_free(&it, recover, sha1);
     char* message = volume_find_result_to_string(find);
 
-    fprintf(output, "%s: %s", recover, message);
+    fprintf(output, "%s: %s\n", recover, message);
 
-    if (memcmp(sha1, VOLUME_SHA1_NONE, SHA_DIGEST_LENGTH) != 0 &&
-        find == VOLUME_FIND_RESULT_OK)
-    {
-        fprintf(output, " with SHA-1");
-    }
-
-    fprintf(output, "\n");
-
-    if (find != VOLUME_FIND_RESULT_OK)
+    if (!volume_find_result_is_ok(find))
     {
         return;
     }

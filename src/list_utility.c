@@ -13,8 +13,6 @@ void list_utility(
     UTILITY_UNUSED const char* recover,
     UTILITY_UNUSED unsigned char sha1[SHA_DIGEST_LENGTH])
 {
-    // testit(volume, sha1);
-
     uint32_t entries = 0;
     struct VolumeRootIterator it;
 

@@ -7,7 +7,8 @@
 
 static char* VOLUME_FIND_RESULT_STRINGS[VOLUME_FIND_RESULT_COUNT] =
 {
-    [VOLUME_FIND_RESULT_OK] = "successfully recovered",
+    [VOLUME_FIND_RESULT_NAME_FOUND] = "successfully recovered",
+    [VOLUME_FIND_RESULT_SHA1_FOUND] = "successfully recovered with SHA-1",
     [VOLUME_FIND_RESULT_NOT_FOUND] = "file not found",
     [VOLUME_FIND_RESULT_MULTIPLE_FOUND] = "multiple candidates found"
 };

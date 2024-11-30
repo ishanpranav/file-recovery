@@ -241,15 +241,17 @@ static void volume_hash_file(
     SHA1(data, iterator->entry->fileSize * sizeof * data, digest);
 }
 
-bool volume_root_first_free(
+VolumeFindResult volume_root_first_free(
     VolumeRootIterator iterator,
     const char* fileName,
     unsigned char sha1[SHA_DIGEST_LENGTH])
 {
     if (*fileName == '\0')
     {
-        return false;
+        return VOLUME_FIND_RESULT_NOT_FOUND;
     }
+    
+    bool hasSha1 = memcmp(sha1, VOLUME_SHA1_NONE, SHA_DIGEST_LENGTH) != 0;
 
     for (; !iterator->end; volume_root_next(iterator))
     {
@@ -268,9 +270,9 @@ bool volume_root_first_free(
 
         if (*buffer != '\0' && strcmp(buffer + 1, fileName + 1) == 0)
         {
-            if (memcmp(sha1, VOLUME_SHA1_NONE, SHA_DIGEST_LENGTH) == 0)
+            if (!hasSha1)
             {
-                return true;
+                return VOLUME_FIND_RESULT_NAME_FOUND;
             }
 
             unsigned char digest[SHA_DIGEST_LENGTH];
@@ -279,12 +281,12 @@ bool volume_root_first_free(
             
             if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
             {
-                return true;
+                return VOLUME_FIND_RESULT_SHA1_FOUND;
             }
         }
     }
 
-    return false;
+    return VOLUME_FIND_RESULT_NOT_FOUND;
 }
 
 VolumeFindResult volume_root_single_free(
@@ -292,26 +294,25 @@ VolumeFindResult volume_root_single_free(
     const char* fileName,
     unsigned char sha1[SHA_DIGEST_LENGTH])
 {
-    if (!volume_root_first_free(iterator, fileName, sha1))
-    {
-        return VOLUME_FIND_RESULT_NOT_FOUND;
-    }
+    VolumeFindResult first = volume_root_first_free(iterator, fileName, sha1);
 
-    if (iterator->end)
+    if (first == VOLUME_FIND_RESULT_NOT_FOUND || iterator->end)
     {
-        return VOLUME_FIND_RESULT_OK;
+        return first;
     }
 
     struct VolumeRootIterator copy = *iterator;
 
     volume_root_next(&copy);
 
-    if (volume_root_first_free(&copy, fileName, sha1))
+    VolumeFindResult second = volume_root_first_free(&copy, fileName, sha1);
+
+    if (second != VOLUME_FIND_RESULT_NOT_FOUND)
     {
         return VOLUME_FIND_RESULT_MULTIPLE_FOUND;
     }
 
-    return VOLUME_FIND_RESULT_OK;
+    return first;
 }
 
 void finalize_volume(Volume instance)

@@ -45,7 +45,7 @@ void volume_root_next(VolumeRootIterator iterator);
  * @param sha1
  * @return
  */
-bool volume_root_first_free(
+VolumeFindResult volume_root_first_free(
     VolumeRootIterator iterator,
     const char* fileName,
     unsigned char sha1[SHA_DIGEST_LENGTH]);
