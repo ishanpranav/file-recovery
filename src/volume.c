@@ -225,8 +225,6 @@ void volume_root_next(VolumeRootIterator iterator)
     iterator->end = fat32_is_eof(iterator->cluster);
 }
 
-// #include <stdio.h>
-// #include <stdlib.h>
 static void volume_hash_file(
     VolumeRootIterator iterator,
     unsigned char digest[SHA_DIGEST_LENGTH])
@@ -279,17 +277,6 @@ bool volume_root_first_free(
 
             volume_hash_file(iterator, digest);
             
-            // printf("given: ");
-            // for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
-            // {
-            //     printf("%02x ", sha1[i]);
-            // }
-            // printf("\ncalcd: ");
-            // for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
-            // {
-            //     printf("%02x ", digest[i]);
-            // }
-            // printf("\n");
             if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
             {
                 return true;
