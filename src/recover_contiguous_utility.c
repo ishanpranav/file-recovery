@@ -2,6 +2,9 @@
 // Copyright (c) 2024 Ishan Pranav
 // Licensed under the MIT license.
 
+// References
+//  - Microsoft Extensible Firmware Initiative FAT32 File System Specification
+
 #include <string.h>
 #include "fat32.h"
 #include "fat32_boot_sector.h"
@@ -54,7 +57,7 @@ void recover_contiguous_utility(
     for (uint32_t fat = 0; fat < bootSector->fats; fat++)
     {
         // From specification:
-        //  BPB_ResvdSecCnt + (BPB_NumFATs * FATSz)
+        //   BPB_ResvdSecCnt + (BPB_NumFATs * FATSz)
 
         uint32_t fatSector = bootSector->reservedSectors;
 

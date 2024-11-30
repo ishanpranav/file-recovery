@@ -3,7 +3,7 @@
 // Licensed under the MIT license.
 
 // References
-//   - Microsoft Extensible Firmware Initiative FAT32 File System Specification
+//  - Microsoft Extensible Firmware Initiative FAT32 File System Specification
 
 // From specification:
 //   If(FATContent >= 0x0FFFFFF8)
@@ -19,7 +19,9 @@
 #define fat32_is_eof(value) ((value) >= 0x0ffffff8)
 
 // From specification:
-//  Microsoft operating system FAT drivers use the EOC value `0x0FFF` for FAT12
-//  `0xFFFF` for FAT16, and `0x0FFFFFFF` for FAT32 when they set the contents
-//  of a cluster to the EOC mark.
-#define FAT32_EOF (0x0fffffff)
+//   Microsoft operating system FAT drivers use the EOC value `0x0FFF` for FAT12
+//   `0xFFFF` for FAT16, and `0x0FFFFFFF` for FAT32 when they set the contents
+//   of a cluster to the EOC mark.
+
+/** Specifies the value used to indicate the end of a cluster chain. */
+#define FAT32_EOF 0x0fffffff

@@ -8,6 +8,7 @@
 //  - https://www.man7.org/linux/man-pages/man2/mmap.2.html
 //  - https://www.man7.org/linux/man-pages/man2/open.2.html
 //  - https://www.man7.org/linux/man-pages/man3/stat.3type.html
+//  - Microsoft Extensible Firmware Initiative FAT32 File System Specification
 
 #include <sys/mman.h>
 #include <sys/stat.h>
