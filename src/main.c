@@ -79,6 +79,7 @@ int main(int count, char* args[])
 
         case 'l':
             options |= OPTIONS_LIST;
+            // sha1 = optarg;
             break;
 
         case 'r':

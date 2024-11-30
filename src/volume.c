@@ -64,6 +64,13 @@ volume_exit:
 
 void volume_get_display_name(char buffer[13], uint8_t name[11])
 {
+    if (*name == 0x20)
+    {
+        *buffer = '\0';
+
+        return;
+    }
+
     char* end = buffer;
 
     memcpy(end, name, 8);
@@ -202,6 +209,7 @@ void volume_root_next(VolumeRootIterator iterator)
     uint32_t fatEntryOffset = fatOffset % bootSector->bytesPerSector;
 
     // From specification:
+    
     //   FAT32ClusEntryVal =
     //     (*((DWORD *) &SecBuff[ThisFATEntOffset])) & 0x0FFFFFFF;
 
@@ -226,6 +234,8 @@ bool volume_root_first(VolumeRootIterator iterator, const char* fileName)
     for (; !iterator->end; volume_root_next(iterator))
     {
         if (iterator->entry->attributes & FAT32_ATTRIBUTES_DIRECTORY ||
+            iterator->entry->attributes & FAT32_ATTRIBUTES_VOLUME_ID ||
+            iterator->entry->attributes & FAT32_ATTRIBUTES_LONG_NAME ||
             !(fat32_directory_entry_is_end_free(iterator->entry) ||
                 fat32_directory_entry_is_mid_free(iterator->entry)))
         {
@@ -236,7 +246,7 @@ bool volume_root_first(VolumeRootIterator iterator, const char* fileName)
 
         volume_get_display_name(buffer, iterator->entry->name);
 
-        if (strcmp(buffer + 1, fileName + 1) == 0)
+        if (*buffer != '\0' && strcmp(buffer + 1, fileName + 1) == 0)
         {
             return true;
         }
