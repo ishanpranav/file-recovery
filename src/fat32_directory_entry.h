@@ -13,7 +13,7 @@
  * @param value the value to test.
  * @return `true` if `value` is an `0xe5` free entry; otherwise, `false`.
  */
-#define fat32_directory_entry_is_mid_free(value) ((value)->name[0] == 0xe5)
+#define fat32_directory_entry_is_mid_free(value) (*(value)->name == 0xe5)
 
 /**
  * Determines whether a given entry is an end-directory free entry (`0x00`). To
@@ -23,7 +23,16 @@
  * @param value the value to test.
  * @return `true` if `value` is an `0x00` free entry; otherwise, `false`.
  */
-#define fat32_directory_entry_is_end_free(value) (!(value)->name[0])
+#define fat32_directory_entry_is_end_free(value) (!*(value)->name)
+
+/**
+ * 
+ * 
+ * @param lo
+ * @param hi
+ * @return 
+ */
+#define fat32_directory_entry_first_cluster(lo, hi) (((hi) << 16) | (lo))
 
 /** Represents a Microsoft FAT32 directory entry. */
 struct Fat32DirectoryEntry

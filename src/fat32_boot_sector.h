@@ -92,7 +92,7 @@ struct Fat32BootSector
      *
      * This corresponds to the `BPB_FATSz16` field. 
      */
-    uint16_t fatSize16;
+    uint16_t sectorsPerFat16;
 
     /**
      * Specifies the "sectors per track" for the storage device.

@@ -69,9 +69,9 @@ void volume_get_display_name(char buffer[13], uint8_t name[11])
 
     end += 7;
 
-    if (buffer[0] == 0x05)
+    if (*buffer == 0x05)
     {
-        buffer[0] = (char)0xe5;
+        *buffer = (char)0xe5;
     }
 
     while (end > buffer && (*end == '\0' || *end == 0x20))
@@ -217,20 +217,25 @@ void volume_root_next(VolumeRootIterator iterator)
 
 bool volume_root_first(VolumeRootIterator iterator, const char* fileName)
 {
+    if (*fileName == '\0')
+    {
+        return false;
+    }
+
     for (; !iterator->end; volume_root_next(iterator))
     {
         if (iterator->entry->attributes & FAT32_ATTRIBUTES_DIRECTORY ||
-            !(fat32_directory_entry_is_end_free(iterator->entry) &&
+            !(fat32_directory_entry_is_end_free(iterator->entry) ||
                 fat32_directory_entry_is_mid_free(iterator->entry)))
         {
             continue;
         }
-
+        
         char buffer[13];
 
         volume_get_display_name(buffer, iterator->entry->name);
 
-        if (strcmp((char*)(iterator->entry->name + 1), fileName + 1) == 0)
+        if (strcmp(buffer + 1, fileName + 1) == 0)
         {
             return true;
         }
@@ -248,7 +253,14 @@ VolumeFindResult volume_root_single(
         return VOLUME_FIND_RESULT_NOT_FOUND;
     }
 
+    if (iterator->end)
+    {
+        return VOLUME_FIND_RESULT_OK;
+    }
+
     struct VolumeRootIterator copy = *iterator;
+
+    volume_root_next(&copy);
 
     if (volume_root_first(&copy, fileName))
     {

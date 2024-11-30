@@ -46,7 +46,7 @@ int main(int count, char* args[])
         goto main_exit;
     }
 
-    char* app = args[0];
+    char* app = *args;
 
     if (count < 2)
     {
@@ -57,7 +57,7 @@ int main(int count, char* args[])
 
     char* path = args[1];
 
-    if (path[0] == '-')
+    if (*path == '-')
     {
         main_print_usage(app);
 
@@ -85,11 +85,11 @@ int main(int count, char* args[])
             options |= OPTIONS_RECOVER_CONTIGUOUS;
             recover = optarg;
 
-            if (recover[0] == '-')
+            if (*recover == '-')
             {
                 main_print_usage(app);
 
-                goto main_exit_volume;
+                goto main_exit;
             }
             break;
 
@@ -97,11 +97,11 @@ int main(int count, char* args[])
             options |= OPTIONS_RECOVER_NON_CONTIGUOUS;
             recover = optarg;
 
-            if (recover[0] == '-')
+            if (*recover == '-')
             {
                 main_print_usage(app);
 
-                goto main_exit_volume;
+                goto main_exit;
             }
             break;
 
@@ -109,18 +109,18 @@ int main(int count, char* args[])
             options |= OPTIONS_SHA1;
             sha1 = optarg;
 
-            if (sha1[0] == '-')
+            if (*sha1 == '-')
             {
                 main_print_usage(app);
 
-                goto main_exit_volume;
+                goto main_exit;
             }
             break;
 
         default:
             main_print_usage(app);
 
-            goto main_exit_volume;
+            goto main_exit;
         }
     }
 
@@ -133,7 +133,7 @@ int main(int count, char* args[])
     {
         main_print_usage(app);
 
-        goto main_exit_volume;
+        goto main_exit;
     }
 
     struct Volume disk;
@@ -155,7 +155,6 @@ int main(int count, char* args[])
 
     result = EXIT_SUCCESS;
 
-main_exit_volume:
     finalize_volume(&disk);
 
 main_exit:

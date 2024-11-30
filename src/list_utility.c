@@ -34,9 +34,10 @@ void list_utility(
         volume_get_display_name(buffer, it.entry->name);
         fprintf(output, "%s", buffer);
 
-        uint32_t firstCluster = it.entry->firstClusterHi << 16;
+        uint32_t lo = it.entry->firstClusterLo;
+        uint32_t hi = it.entry->firstClusterHi;
+        uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
 
-        firstCluster |= it.entry->firstClusterLo;
         entries++;
 
         if (it.entry->attributes & FAT32_ATTRIBUTES_DIRECTORY)
