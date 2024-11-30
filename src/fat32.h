@@ -10,10 +10,16 @@
 //        IsEOF = TRUE;
 
 /**
- * Determines whether a given value is an end of file (EOF) or indicator. An EOF
+ * Determines whether a given value is an end of file (EOF) indicator. An EOF
  * indicator may be used to indicate the end of a cluster chain.
  * 
  * @param value the value to test.
  * @return `true` if `value` is an EOF indicator; otherwise, `false`.
  */
 #define fat32_is_eof(value) ((value) >= 0x0ffffff8)
+
+// From specification:
+//  Microsoft operating system FAT drivers use the EOC value `0x0FFF` for FAT12
+//  `0xFFFF` for FAT16, and `0x0FFFFFFF` for FAT32 when they set the contents
+//  of a cluster to the EOC mark.
+#define FAT32_EOF (0x0fffffff)

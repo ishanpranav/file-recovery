@@ -3,6 +3,7 @@
 // Licensed under the MIT license.
 
 #include <string.h>
+#include "fat32.h"
 #include "fat32_boot_sector.h"
 #include "utility.h"
 #include "volume_root_iterator.h"
@@ -43,7 +44,6 @@ void recover_contiguous_utility(
     uint32_t lo = it.entry->firstClusterLo;
     uint32_t hi = it.entry->firstClusterHi;
     uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
-    uint32_t eof = 0x0ffffff8;
     uint32_t bytesPerCluster = bootSector->sectorsPerCluster;
 
     bytesPerCluster *= bootSector->bytesPerSector;
@@ -53,23 +53,21 @@ void recover_contiguous_utility(
 
     for (uint32_t fat = 0; fat < bootSector->fats; fat++)
     {
+        // From specification:
+        //  BPB_ResvdSecCnt + (BPB_NumFATs * FATSz
+        
         uint32_t fatSector = bootSector->reservedSectors;
 
         fatSector += fat * bootSector->sectorsPerFat;
 
         uint32_t fatStartByte = fatSector * bootSector->bytesPerSector;
+        uint32_t* fatData = (uint32_t*)((uint8_t*)volume->data + fatStartByte);
 
         for (uint32_t cluster = firstCluster; cluster < lastCluster; cluster++)
         {
-            //  FATOffset = N * 4;
-
-            uint32_t fatOffset = cluster * 4;
-            uint32_t fatByte = fatStartByte + fatOffset;
-            uint32_t nextCluster = cluster + 1;
-
-            memcpy((char*)volume->data + fatByte, &nextCluster, sizeof(nextCluster));
+            fatData[cluster] = cluster + 1;
         }
 
-        memcpy((char*)volume->data + fatStartByte + lastCluster * 4, &eof, sizeof(eof));
+        fatData[lastCluster] = FAT32_EOF;
     }
 }
