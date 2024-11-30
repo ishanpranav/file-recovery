@@ -10,7 +10,7 @@
  * test if a directory is free, test both `fat32_directory_entry_is_mid_free`
  * and `fat32_directory_entry_is_end_free`.
  * 
- * @param value the value to test.
+ * @param value a pointer to the value to test.
  * @return `true` if `value` is an `0xe5` free entry; otherwise, `false`.
  */
 #define fat32_directory_entry_is_mid_free(value) (*(value)->name == 0xe5)
@@ -20,17 +20,18 @@
  * test if a directory is free, test both `fat32_directory_entry_is_mid_free`
  * and `fat32_directory_entry_is_end_free`.
  * 
- * @param value the value to test.
+ * @param value a pointer to the value to test.
  * @return `true` if `value` is an `0x00` free entry; otherwise, `false`.
  */
 #define fat32_directory_entry_is_end_free(value) (!*(value)->name)
 
 /**
+ * Gets the 32-bit cluster number of the first cluster in an entry's cluster
+ * chain.
  * 
- * 
- * @param lo
- * @param hi
- * @return 
+ * @param lo the lower 16 bits of the first cluster number.
+ * @param hi the upper 16 bits of the first cluster number.
+ * @return the 32-bit concatenation of `lo` an `hi`.
  */
 #define fat32_directory_entry_first_cluster(lo, hi) (((hi) << 16) | (lo))
 
@@ -120,6 +121,6 @@ struct Fat32DirectoryEntry
 };
 
 /** Represents a Microsoft FAT32 directory entry. */
-typedef struct Fat32DirectoryEntry* Fat32DirectoryEntry;
+typedef struct Fat32DirectoryEntry Fat32DirectoryEntry;
 
 #pragma pack(pop)

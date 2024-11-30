@@ -9,12 +9,12 @@
 
 void list_utility(
     FILE* output,
-    Volume volume,
+    Volume* volume,
     UTILITY_UNUSED const char* recover,
     UTILITY_UNUSED unsigned char sha1[SHA_DIGEST_LENGTH])
 {
     uint32_t entries = 0;
-    struct VolumeRootIterator it;
+    VolumeRootIterator it;
 
     for (volume_root_begin(&it, volume); !it.end; volume_root_next(&it))
     {

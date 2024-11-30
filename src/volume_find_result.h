@@ -34,8 +34,10 @@ enum VolumeFindResult
 typedef enum VolumeFindResult VolumeFindResult;
 
 /**
- *
- * @param value
- * @return
+ * Returns a string representation of the search result.
+ * 
+ * @param value the value to convert.
+ * @return a pointer to a zero-terminated string representing `value`. This
+ *         value should not be modified or passed as an argument to `free`.
  */
-char* volume_find_result_to_string(VolumeFindResult value);
+const char* volume_find_result_to_string(VolumeFindResult value);

@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include "volume_find_result.h"
 
-static char* VOLUME_FIND_RESULT_STRINGS[VOLUME_FIND_RESULT_COUNT] =
+static const char* VOLUME_FIND_RESULT_STRINGS[VOLUME_FIND_RESULT_COUNT] =
 {
     [VOLUME_FIND_RESULT_NAME_FOUND] = "successfully recovered",
     [VOLUME_FIND_RESULT_SHA1_FOUND] = "successfully recovered with SHA-1",
@@ -13,7 +13,7 @@ static char* VOLUME_FIND_RESULT_STRINGS[VOLUME_FIND_RESULT_COUNT] =
     [VOLUME_FIND_RESULT_MULTIPLE_FOUND] = "multiple candidates found"
 };
 
-char* volume_find_result_to_string(VolumeFindResult value)
+const char* volume_find_result_to_string(VolumeFindResult value)
 {
     if (value < 0 || value >= VOLUME_FIND_RESULT_COUNT)
     {

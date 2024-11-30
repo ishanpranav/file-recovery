@@ -8,11 +8,19 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/** */
+/** Specifies the SHA-1 hash digest length. */
 #define SHA_DIGEST_LENGTH 20
 
-/** Specifies the null or missing SHA1 hash digest. */
+/** Specifies the null or missing SHA-1 hash digest. */
 #define VOLUME_SHA1_NONE "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+
+// From specification:
+//   Microsoft operating system FAT drivers use the EOC value `0x0FFF` for FAT12
+//   `0xFFFF` for FAT16, and `0x0FFFFFFF` for FAT32 when they set the contents
+//   of a cluster to the EOC mark.
+
+/** Specifies the value used to indicate the end of a cluster chain. */
+#define VOLUME_EOF 0x0fffffff
 
 /** Represents a FAT32 disk image. */
 struct Volume
@@ -22,7 +30,7 @@ struct Volume
 };
 
 /** Represents a FAT32 disk image. */
-typedef struct Volume* Volume;
+typedef struct Volume Volume;
 
 /**
  * Initializes an instance of the `Volume` struct.
@@ -33,7 +41,7 @@ typedef struct Volume* Volume;
  * @return `true` if the operation succeeded; otherwise `false`. When `false`,
  *         `errno` is assigned to indicate the error.
  */
-bool volume(Volume instance, const char* path);
+bool volume(Volume* instance, const char* path);
 
 /**
  * Converts a short directory entry name to a short display name.
@@ -50,6 +58,6 @@ void volume_get_display_name(char buffer[13], uint8_t name[11]);
  * @param instance the `Volume` instance. This method corrupts the `instance`
  *                 argument.
  */
-void finalize_volume(Volume instance);
+void finalize_volume(Volume* instance);
 
 #endif

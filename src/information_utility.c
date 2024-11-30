@@ -9,11 +9,11 @@
 
 void information_utility(
     FILE* output,
-    Volume volume,
+    Volume* volume,
     UTILITY_UNUSED const char* recover,
     UTILITY_UNUSED unsigned char sha1[SHA_DIGEST_LENGTH])
 {
-    Fat32BootSector bootSector = volume->data;
+    Fat32BootSector* bootSector = volume->data;
 
     fprintf(
         output,

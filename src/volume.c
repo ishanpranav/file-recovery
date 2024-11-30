@@ -17,12 +17,18 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
-#include "fat32.h"
 #include "fat32_attributes.h"
 #include "fat32_boot_sector.h"
 #include "volume_root_iterator.h"
 
-bool volume(Volume instance, const char* path)
+// From specification:
+//   If(FATContent >= 0x0FFFFFF8)
+//        IsEOF = TRUE;
+
+#define volume_is_eof(value) ((value) >= 0x0ffffff8)
+
+
+bool volume(Volume* instance, const char* path)
 {
     bool result = false;
     int descriptor = open(path, O_RDWR);
@@ -113,9 +119,9 @@ void volume_get_display_name(char buffer[13], uint8_t name[11])
     *end = '\0';
 }
 
-static void volume_root_reset_offset(VolumeRootIterator iterator)
+static void volume_root_reset_offset(VolumeRootIterator* iterator)
 {
-    Fat32BootSector bootSector = iterator->instance->data;
+    Fat32BootSector* bootSector = iterator->instance->data;
 
     // From specification:
     //   FirstSectorofCluster = ((N – 2) * BPB_SecPerClus) + FirstDataSector;
@@ -131,11 +137,11 @@ static void volume_root_reset_offset(VolumeRootIterator iterator)
     iterator->data = data;
 }
 
-void volume_root_begin(VolumeRootIterator iterator, Volume instance)
+void volume_root_begin(VolumeRootIterator* iterator, Volume* instance)
 {
     iterator->instance = instance;
 
-    Fat32BootSector bootSector = instance->data;
+    Fat32BootSector* bootSector = instance->data;
 
     // From specification:
 
@@ -144,7 +150,7 @@ void volume_root_begin(VolumeRootIterator iterator, Volume instance)
 
     uint32_t rootSectors = bootSector->rootEntries;
 
-    rootSectors *= sizeof(struct Fat32DirectoryEntry);
+    rootSectors *= sizeof(Fat32DirectoryEntry);
     rootSectors += bootSector->bytesPerSector - 1;
     rootSectors /= bootSector->bytesPerSector;
 
@@ -167,13 +173,13 @@ void volume_root_begin(VolumeRootIterator iterator, Volume instance)
 
     volume_root_reset_offset(iterator);
 
-    iterator->entry = (Fat32DirectoryEntry)(iterator->data + iterator->offset);
-    iterator->end = fat32_is_eof(iterator->cluster);
+    iterator->entry = (Fat32DirectoryEntry*)(iterator->data + iterator->offset);
+    iterator->end = volume_is_eof(iterator->cluster);
 }
 
-void volume_root_next(VolumeRootIterator iterator)
+void volume_root_next(VolumeRootIterator* iterator)
 {
-    uint32_t step = sizeof(struct Fat32DirectoryEntry);
+    uint32_t step = sizeof(Fat32DirectoryEntry);
 
     if (iterator->offset < iterator->bytesPerCluster - step)
     {
@@ -181,13 +187,13 @@ void volume_root_next(VolumeRootIterator iterator)
 
         uint8_t* pointer = iterator->data + iterator->offset;
 
-        iterator->entry = (Fat32DirectoryEntry)pointer;
+        iterator->entry = (Fat32DirectoryEntry*)pointer;
         iterator->end = false;
 
         return;
     }
 
-    if (fat32_is_eof(iterator->cluster))
+    if (volume_is_eof(iterator->cluster))
     {
         iterator->end = true;
 
@@ -202,7 +208,7 @@ void volume_root_next(VolumeRootIterator iterator)
     // From specification:
     //   ThisFATSecNum = BPB_ResvdSecCnt + (FATOffset / BPB_BytsPerSec);
 
-    Fat32BootSector bootSector = iterator->instance->data;
+    Fat32BootSector* bootSector = iterator->instance->data;
     uint32_t fatSector = bootSector->reservedSectors;
 
     fatSector += fatOffset / bootSector->bytesPerSector;
@@ -221,18 +227,18 @@ void volume_root_next(VolumeRootIterator iterator)
 
     volume_root_reset_offset(iterator);
 
-    iterator->entry = (Fat32DirectoryEntry)(iterator->data + iterator->offset);
-    iterator->end = fat32_is_eof(iterator->cluster);
+    iterator->entry = (Fat32DirectoryEntry*)(iterator->data + iterator->offset);
+    iterator->end = volume_is_eof(iterator->cluster);
 }
 
 static void volume_hash_file(
-    VolumeRootIterator iterator,
+    VolumeRootIterator* iterator,
     unsigned char digest[SHA_DIGEST_LENGTH])
 {
     uint32_t hi = iterator->entry->firstClusterHi;
     uint32_t lo = iterator->entry->firstClusterLo;
     uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
-    Fat32BootSector bootSector = iterator->instance->data;
+    Fat32BootSector* bootSector = iterator->instance->data;
     uint8_t* data = iterator->instance->data;
 
     data += iterator->firstDataSector * bootSector->bytesPerSector;
@@ -242,7 +248,7 @@ static void volume_hash_file(
 }
 
 VolumeFindResult volume_root_first_free(
-    VolumeRootIterator iterator,
+    VolumeRootIterator* iterator,
     const char* fileName,
     unsigned char sha1[SHA_DIGEST_LENGTH])
 {
@@ -290,7 +296,7 @@ VolumeFindResult volume_root_first_free(
 }
 
 VolumeFindResult volume_root_single_free(
-    VolumeRootIterator iterator,
+    VolumeRootIterator* iterator,
     const char* fileName,
     unsigned char sha1[SHA_DIGEST_LENGTH])
 {
@@ -301,7 +307,7 @@ VolumeFindResult volume_root_single_free(
         return first;
     }
 
-    struct VolumeRootIterator copy = *iterator;
+    VolumeRootIterator copy = *iterator;
 
     volume_root_next(&copy);
 
@@ -315,7 +321,7 @@ VolumeFindResult volume_root_single_free(
     return first;
 }
 
-void finalize_volume(Volume instance)
+void finalize_volume(Volume* instance)
 {
     munmap(instance->data, instance->size);
 }

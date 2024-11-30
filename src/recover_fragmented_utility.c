@@ -1,4 +1,4 @@
-// recover_contiguous_utility.c
+// recover_fragmented_utility.c
 // Copyright (c) 2024 Ishan Pranav
 // Licensed under the MIT license.
 
@@ -15,7 +15,7 @@ static uint32_t math_ceildiv(uint32_t a, uint32_t b)
     return (a + b - 1) / b;
 }
 
-void recover_contiguous_utility(
+void recover_fragmented_utility(
     FILE* output,
     Volume* volume,
     const char* recover,

@@ -21,11 +21,11 @@ enum Options
     OPTIONS_RECOVER_CONTIGUOUS = 0x4,
 
     /** Recover a possibly non-contiguous file. */
-    OPTIONS_RECOVER_NON_CONTIGUOUS = 0x8,
+    OPTIONS_RECOVER_FRAGMENTED = 0x8,
 
     /** Recover a file. */
     OPTIONS_RECOVER =
-        OPTIONS_RECOVER_CONTIGUOUS | OPTIONS_RECOVER_NON_CONTIGUOUS,
+        OPTIONS_RECOVER_CONTIGUOUS | OPTIONS_RECOVER_FRAGMENTED,
 
     /** The SHA1 digest. */
     OPTIONS_SHA1 = 0x10

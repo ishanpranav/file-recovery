@@ -211,6 +211,6 @@ struct Fat32BootSector
 };
 
 /** Represents a Microsoft FAT32 boot sector. */
-typedef struct Fat32BootSector* Fat32BootSector;
+typedef struct Fat32BootSector Fat32BootSector;
 
 #pragma pack(pop)

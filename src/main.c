@@ -21,7 +21,7 @@ static const Utility UTILITIES_BY_OPTIONS[] =
     [OPTIONS_INFORMATION] = information_utility,
     [OPTIONS_LIST] = list_utility,
     [OPTIONS_RECOVER_CONTIGUOUS] = recover_contiguous_utility,
-    // [OPTIONS_RECOVER_NON_CONTIGUOUS] = recover_non_contiguous_utility
+    [OPTIONS_RECOVER_FRAGMENTED] = recover_fragmented_utility
 };
 
 static void main_print_usage(char* app)
@@ -92,7 +92,7 @@ int main(int count, char* args[])
             break;
 
         case 'R':
-            options |= OPTIONS_RECOVER_NON_CONTIGUOUS;
+            options |= OPTIONS_RECOVER_FRAGMENTED;
             recover = optarg;
 
             if (*recover == '-')
@@ -127,14 +127,14 @@ int main(int count, char* args[])
         (options & OPTIONS_INFORMATION && options != OPTIONS_INFORMATION) ||
         (options & OPTIONS_LIST && options != OPTIONS_LIST) ||
         (options & OPTIONS_SHA1 && !(options & OPTIONS_RECOVER)) ||
-        (options & OPTIONS_RECOVER_NON_CONTIGUOUS && !(options & OPTIONS_SHA1)))
+        (options & OPTIONS_RECOVER_FRAGMENTED && !(options & OPTIONS_SHA1)))
     {
         main_print_usage(app);
 
         goto main_exit;
     }
 
-    struct Volume disk;
+    Volume disk;
 
     if (!volume(&disk, path))
     {
