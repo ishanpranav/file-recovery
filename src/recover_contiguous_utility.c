@@ -54,8 +54,8 @@ void recover_contiguous_utility(
     for (uint32_t fat = 0; fat < bootSector->fats; fat++)
     {
         // From specification:
-        //  BPB_ResvdSecCnt + (BPB_NumFATs * FATSz
-        
+        //  BPB_ResvdSecCnt + (BPB_NumFATs * FATSz)
+
         uint32_t fatSector = bootSector->reservedSectors;
 
         fatSector += fat * bootSector->sectorsPerFat;
