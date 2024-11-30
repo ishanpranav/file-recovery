@@ -7,52 +7,11 @@
 #include "utility.h"
 #include "volume_root_iterator.h"
 
-void testit(Volume volume, char* fileName) 
-{
-    struct VolumeRootIterator it;
-
-    volume_root_begin(&it, volume);
-
-    VolumeFindResult find = volume_root_single(&it, fileName);
-
-    char* result = volume_find_result_to_string(find);
-
-    printf("result: '%s'\n", result);
-    volume_root_begin(&it, volume);
-
-    if (!volume_root_first(&it, fileName))
-    {
-        printf("didn't find a match\n");
-
-        return;
-    }
-
-    if (it.end)
-    {
-        printf("ended\n");
-
-        return;
-    }
-
-    struct VolumeRootIterator copy = it;
-
-    volume_root_next(&copy);
-
-    if (volume_root_first(&copy, fileName))
-    {
-        printf("found another: '%.11s'\n", it.entry->name);
-
-        return;
-    }
-
-    printf("perfect!\n");
-}
-
 void list_utility(
     FILE* output,
     Volume volume,
-    UTILITY_UNUSED char* recover,
-    UTILITY_UNUSED char* sha1)
+    UTILITY_UNUSED const char* recover,
+    UTILITY_UNUSED unsigned char sha1[SHA_DIGEST_LENGTH])
 {
     // testit(volume, sha1);
 

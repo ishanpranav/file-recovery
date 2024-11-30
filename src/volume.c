@@ -10,6 +10,7 @@
 //  - https://www.man7.org/linux/man-pages/man3/stat.3type.html
 //  - Microsoft Extensible Firmware Initiative FAT32 File System Specification
 
+#include <openssl/sha.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -21,7 +22,7 @@
 #include "fat32_boot_sector.h"
 #include "volume_root_iterator.h"
 
-bool volume(Volume instance, char* path)
+bool volume(Volume instance, const char* path)
 {
     bool result = false;
     int descriptor = open(path, O_RDWR);
@@ -209,7 +210,7 @@ void volume_root_next(VolumeRootIterator iterator)
     uint32_t fatEntryOffset = fatOffset % bootSector->bytesPerSector;
 
     // From specification:
-    
+
     //   FAT32ClusEntryVal =
     //     (*((DWORD *) &SecBuff[ThisFATEntOffset])) & 0x0FFFFFFF;
 
@@ -224,7 +225,28 @@ void volume_root_next(VolumeRootIterator iterator)
     iterator->end = fat32_is_eof(iterator->cluster);
 }
 
-bool volume_root_first(VolumeRootIterator iterator, const char* fileName)
+// #include <stdio.h>
+// #include <stdlib.h>
+static void volume_hash_file(
+    VolumeRootIterator iterator,
+    unsigned char digest[SHA_DIGEST_LENGTH])
+{
+    uint32_t hi = iterator->entry->firstClusterHi;
+    uint32_t lo = iterator->entry->firstClusterLo;
+    uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
+    Fat32BootSector bootSector = iterator->instance->data;
+    uint8_t* data = iterator->instance->data;
+
+    data += iterator->firstDataSector * bootSector->bytesPerSector;
+    data += (firstCluster - 2) * iterator->bytesPerCluster;
+
+    SHA1(data, iterator->entry->fileSize * sizeof * data, digest);
+}
+
+bool volume_root_first_free(
+    VolumeRootIterator iterator,
+    const char* fileName,
+    unsigned char sha1[SHA_DIGEST_LENGTH])
 {
     if (*fileName == '\0')
     {
@@ -241,25 +263,49 @@ bool volume_root_first(VolumeRootIterator iterator, const char* fileName)
         {
             continue;
         }
-        
+
         char buffer[13];
 
         volume_get_display_name(buffer, iterator->entry->name);
 
         if (*buffer != '\0' && strcmp(buffer + 1, fileName + 1) == 0)
         {
-            return true;
+            if (memcmp(sha1, VOLUME_SHA1_NONE, SHA_DIGEST_LENGTH) == 0)
+            {
+                return true;
+            }
+
+            unsigned char digest[SHA_DIGEST_LENGTH];
+
+            volume_hash_file(iterator, digest);
+            
+            // printf("given: ");
+            // for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
+            // {
+            //     printf("%02x ", sha1[i]);
+            // }
+            // printf("\ncalcd: ");
+            // for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
+            // {
+            //     printf("%02x ", digest[i]);
+            // }
+            // printf("\n");
+            if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
+            {
+                return true;
+            }
         }
     }
 
     return false;
 }
 
-VolumeFindResult volume_root_single(
+VolumeFindResult volume_root_single_free(
     VolumeRootIterator iterator,
-    const char* fileName)
+    const char* fileName,
+    unsigned char sha1[SHA_DIGEST_LENGTH])
 {
-    if (!volume_root_first(iterator, fileName))
+    if (!volume_root_first_free(iterator, fileName, sha1))
     {
         return VOLUME_FIND_RESULT_NOT_FOUND;
     }
@@ -273,7 +319,7 @@ VolumeFindResult volume_root_single(
 
     volume_root_next(&copy);
 
-    if (volume_root_first(&copy, fileName))
+    if (volume_root_first_free(&copy, fileName, sha1))
     {
         return VOLUME_FIND_RESULT_MULTIPLE_FOUND;
     }

@@ -2,6 +2,10 @@
 # Copyright (c) 2024 Ishan Pranav
 # Licensed under the MIT license.
 
+# References:
+#  - https://unix.stackexchange.com/questions/454962/mounting-volume-partition-with-permissions-for-user
+#  - https://superuser.com/questions/320415/mount-device-with-specific-user-rights
+
 if [ -z "$1" ] || [ -z "$2" ]; then
   echo "Usage: $0 <OUT_FILE> <MOUNT_DIR>"
   exit 1

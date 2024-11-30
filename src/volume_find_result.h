@@ -13,6 +13,9 @@ enum VolumeFindResult
 
     /** Multiple candidates were discovered. */
     VOLUME_FIND_RESULT_MULTIPLE_FOUND,
+    
+    /** At least one candidate was discovered with a matching SHA-1 hash. */
+    VOLUME_FIND_RESULT_SHA1_FIND,
 
     /** The number of volume find result enumeration members. */
     VOLUME_FIND_RESULT_COUNT

@@ -5,9 +5,7 @@
 // References:
 //  - https://www.man7.org/linux/man-pages/man3/getopt.3.html
 //  - https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html
-
-//  - https://unix.stackexchange.com/questions/454962/mounting-volume-partition-with-permissions-for-user
-//  - https://superuser.com/questions/320415/mount-device-with-specific-user-rights
+//  - https://stackoverflow.com/questions/3408706/hexadecimal-string-to-byte-array-in-c
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +64,7 @@ int main(int count, char* args[])
 
     int option;
     char* recover = NULL;
-    char* sha1 = NULL;
+    char* sha1String = "";
     Options options = OPTIONS_NONE;
 
     while ((option = getopt(count - 1, args + 1, ":ilr:R:s:")) != -1)
@@ -79,7 +77,6 @@ int main(int count, char* args[])
 
         case 'l':
             options |= OPTIONS_LIST;
-            // sha1 = optarg;
             break;
 
         case 'r':
@@ -108,9 +105,9 @@ int main(int count, char* args[])
 
         case 's':
             options |= OPTIONS_SHA1;
-            sha1 = optarg;
+            sha1String = optarg;
 
-            if (*sha1 == '-')
+            if (*sha1String == '-')
             {
                 main_print_usage(app);
 
@@ -144,6 +141,15 @@ int main(int count, char* args[])
         perror(app);
 
         goto main_exit;
+    }
+
+    unsigned char sha1[SHA_DIGEST_LENGTH] = VOLUME_SHA1_NONE;
+    int i = 0;
+    
+    while (i < SHA_DIGEST_LENGTH && 
+        sscanf(sha1String + 2 * i, "%2hhx", sha1 + i) == 1)
+    {
+        i++;
     }
 
     for (Options mask = 0x8; mask; mask >>= 1)

@@ -19,17 +19,25 @@ static uint32_t math_ceildiv(uint32_t a, uint32_t b)
 void recover_contiguous_utility(
     FILE* output,
     Volume volume,
-    char* recover,
-    UTILITY_UNUSED char* sha1)
+    const char* recover,
+    unsigned char sha1[SHA_DIGEST_LENGTH])
 {
     struct VolumeRootIterator it;
 
     volume_root_begin(&it, volume);
 
-    VolumeFindResult find = volume_root_single(&it, recover);
+    VolumeFindResult find = volume_root_single_free(&it, recover, sha1);
     char* message = volume_find_result_to_string(find);
 
-    fprintf(output, "%s: %s\n", recover, message);
+    fprintf(output, "%s: %s", recover, message);
+
+    if (memcmp(sha1, VOLUME_SHA1_NONE, SHA_DIGEST_LENGTH) != 0 &&
+        find == VOLUME_FIND_RESULT_OK)
+    {
+        fprintf(output, " with SHA-1");
+    }
+
+    fprintf(output, "\n");
 
     if (find != VOLUME_FIND_RESULT_OK)
     {

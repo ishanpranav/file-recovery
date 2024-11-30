@@ -42,17 +42,23 @@ void volume_root_next(VolumeRootIterator iterator);
  * 
  * @param iterator
  * @param fileName
+ * @param sha1
  * @return
  */
-bool volume_root_first(VolumeRootIterator iterator, const char* fileName);
+bool volume_root_first_free(
+    VolumeRootIterator iterator,
+    const char* fileName,
+    unsigned char sha1[SHA_DIGEST_LENGTH]);
 
 /**
  * 
  * @param result
  * @param iterator
  * @param fileName
+ * @param sha1
  * @return
 */
-VolumeFindResult volume_root_single(
+VolumeFindResult volume_root_single_free(
     VolumeRootIterator iterator,
-    const char* fileName);
+    const char* fileName,
+    unsigned char sha1[SHA_DIGEST_LENGTH]);

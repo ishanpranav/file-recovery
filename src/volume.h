@@ -8,6 +8,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/** */
+#define SHA_DIGEST_LENGTH 20
+
+/** Specifies the null or missing SHA1 hash digest. */
+#define VOLUME_SHA1_NONE "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+
 /** Represents a FAT32 disk image. */
 struct Volume
 {
@@ -27,7 +33,7 @@ typedef struct Volume* Volume;
  * @return `true` if the operation succeeded; otherwise `false`. When `false`,
  *         `errno` is assigned to indicate the error.
  */
-bool volume(Volume instance, char* path);
+bool volume(Volume instance, const char* path);
 
 /**
  * Converts a short directory entry name to a short display name.
