@@ -75,7 +75,6 @@ static VolumeFindResult combinatorial_search(
 
         memcpy(permutation, p, (k - 1) * sizeof * p);
 
-        int c = 0;
         do
         {
             // printf("%d ", firstCluster);
@@ -83,8 +82,6 @@ static VolumeFindResult combinatorial_search(
             //     printf("%d ", permutation[j]);
             // }
             // printf("\n");
-            c++;
-
             SHA_CTX context;
 
             SHA1_Init(&context);
@@ -102,13 +99,16 @@ static VolumeFindResult combinatorial_search(
                 SHA1_Update(&context, data, iterator->bytesPerCluster);
             }
 
-            data = volume_root_data(&it, permutation[k - 2]);
+            if (k > 2)
+            {
+                data = volume_root_data(&it, permutation[k - 2]);
+            
+                uint32_t remainder = iterator->entry->fileSize;
 
-            uint32_t remainder = iterator->entry->fileSize;
+                remainder -= iterator->bytesPerCluster * (k - 1);
 
-            remainder -= iterator->bytesPerCluster * (k - 1);
-
-            SHA1_Update(&context, data, remainder);
+                SHA1_Update(&context, data, remainder);
+            }
 
             unsigned char digest[SHA_DIGEST_LENGTH];
 
@@ -215,52 +215,4 @@ recover_fragmented_utility_exit:
 
         fprintf(output, "%s: %s\n", recover, message);
     }
-
-    // volume_root_begin(&it, volume);
-
-    // VolumeFindResult find;
-
-    // for (;;)
-    // {
-    //     find = volume_root_first_free(&it, recover, NULL);
-
-    //     if (!volume_find_result_is_ok(find))
-    //     {
-    //         break;
-    //     }
-
-    //     char buffer[13];
-
-    //     volume_display_name(buffer, it.entry->name);
-    //     fprintf(output, "Candidate '%s'\n", buffer);
-
-    //     if (it.end)
-    //     {
-    //         break;
-    //     }
-
-    //     volume_root_next(&it);
-    // }
-
-    // if ()
-    // {
-    // }
-
-    // VolumeFindResult first = volume_root_first_free(iterator, fileName, sha1);
-
-    // if (first == VOLUME_FIND_RESULT_NOT_FOUND || iterator->end)
-    // {
-    //     return first;
-    // }
-
-    // VolumeRootIterator copy = *iterator;
-
-    // volume_root_next(&copy);
-
-    // VolumeFindResult second = volume_root_first_free(&copy, fileName, sha1);
-
-    // if (second != VOLUME_FIND_RESULT_NOT_FOUND)
-    // {
-    //     return VOLUME_FIND_RESULT_MULTIPLE_FOUND;
-    // }
 }
