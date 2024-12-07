@@ -99,16 +99,13 @@ static VolumeFindResult combinatorial_search(
                 SHA1_Update(&context, data, iterator->bytesPerCluster);
             }
 
-            if (k > 2)
-            {
-                data = volume_root_data(&it, permutation[k - 2]);
-            
-                uint32_t remainder = iterator->entry->fileSize;
+            data = volume_root_data(&it, permutation[k - 2]);
 
-                remainder -= iterator->bytesPerCluster * (k - 1);
+            uint32_t remainder = iterator->entry->fileSize;
 
-                SHA1_Update(&context, data, remainder);
-            }
+            remainder -= iterator->bytesPerCluster * (k - 1);
+
+            SHA1_Update(&context, data, remainder);
 
             unsigned char digest[SHA_DIGEST_LENGTH];
 
@@ -124,11 +121,12 @@ static VolumeFindResult combinatorial_search(
                 *results = firstCluster;
                 results++;
 
-                memcpy(results, permutation, (k - 1) * sizeof * results);
+                memcpy(results, permutation, (k - 1) * sizeof * permutation);
 
                 return VOLUME_FIND_RESULT_SHA1_FOUND;
             }
-        } while (next_permutation(permutation, k - 1));
+        }
+        while (next_permutation(permutation, k - 1));
     }
 
     return VOLUME_FIND_RESULT_NOT_FOUND;
