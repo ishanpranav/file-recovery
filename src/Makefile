@@ -13,8 +13,9 @@ CFLAGS=-D_POSIX_C_SOURCE=2 -O3 -lcrypto -pedantic -std=c99 -Wall -Wextra
 all: nyufile
 
 nyufile: main.c fat32_attributes.h fat32_boot_sector.h fat32_directory_entry.h \
-	options.h information_utility list_utility recover_contiguous_utility \
-	recover_fragmented_utility volume volume_find_result
+	options.h information_utility list_utility next_permutation \
+	recover_contiguous_utility recover_fragmented_utility volume \
+	volume_find_result
 	$(CC) $(CFLAGS) *.o main.c -o nyufile
 
 information_utility: information_utility.c utility.h
@@ -23,6 +24,9 @@ information_utility: information_utility.c utility.h
 list_utility: list_utility.c utility.h
 	$(CC) $(CFLAGS) -c list_utility.c
 	
+next_permutation: next_permutation.c next_permutation.h
+	$(CC) $(CFLAGS) -c next_permutation.c
+
 recover_contiguous_utility: recover_contiguous_utility.c utility.h
 	$(CC) $(CFLAGS) -c recover_contiguous_utility.c
 	

@@ -4,22 +4,24 @@
 
 // References
 //  - Microsoft Extensible Firmware Initiative FAT32 File System Specification
+//  - Heap's algorithm: https://en.wikipedia.org/wiki/Heap%27s_algorithm
+//  - Permutation - Generation in lexicographic order: https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order
+// - https://docs.openssl.org/1.0.2/man3/sha/
 
 #include <string.h>
 #include "fat32_boot_sector.h"
+#include "next_permutation.h"
 #include "utility.h"
 #include "volume_root_iterator.h"
-
 #define COMBINATORIAL_SEARCH_N 20
 #define COMBINATORIAL_SEARCH_K 5
 
-static bool combinatorial_search(
+static VolumeFindResult combinatorial_search(
     VolumeRootIterator* iterator,
-    const char* fileName,
     unsigned char sha1[SHA_DIGEST_LENGTH])
 {
-    VolumeRootIterator it;
     Volume* volume = iterator->instance;
+    VolumeRootIterator it;
     bool isFirstCluster[COMBINATORIAL_SEARCH_N] = { 0 };
 
     for (volume_root_begin(&it, volume); !it.end; volume_root_next(&it))
@@ -28,12 +30,15 @@ static bool combinatorial_search(
         uint32_t hi = it.entry->firstClusterHi;
         uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
 
-        isFirstCluster[firstCluster - 2] = true;
+        if (firstCluster - 2 < COMBINATORIAL_SEARCH_N)
+        {
+            isFirstCluster[firstCluster - 2] = true;
+        }
     }
-    
+
     uint32_t candidates[COMBINATORIAL_SEARCH_N];
     uint32_t length = 0;
-    
+
     for (uint32_t cluster = 2; cluster < COMBINATORIAL_SEARCH_N + 2; cluster++)
     {
         if (!isFirstCluster[cluster - 2])
@@ -43,31 +48,86 @@ static bool combinatorial_search(
         }
     }
 
-    VolumeFindResult result = VOLUME_FIND_RESULT_COUNT;
+    printf("length = %u\n", length);
 
-    for (;;)
+    uint32_t bytesPerCluster = iterator->bytesPerCluster;
+    int k = volume_clusters(iterator->entry->fileSize, bytesPerCluster);
+
+    printf("k = %u\n", k);
+
+    int max = COMBINATORIAL_SEARCH_N - k;
+    int difference = length - k;
+
+    if (difference < max)
     {
-        VolumeFindResult find;
-
-        find = volume_root_first_free(iterator, fileName, NULL);
-
-        if (!volume_find_result_is_ok(find))
-        {
-            return false;
-        }
-
-        char buffer[13];
-
-        volume_display_name(buffer, iterator->entry->name);
-        printf("so far candidate '%s'\n", buffer);
-
-        if (iterator->end)
-        {
-            return false;
-        }
-
-        volume_root_next(iterator);
+        max = difference;
     }
+
+    printf("max = %u\n", max);
+
+    for (int i = 0; i < max; i++)
+    {
+        uint32_t permutation[COMBINATORIAL_SEARCH_K - 1];
+        uint32_t hi = iterator->entry->firstClusterHi;
+        uint32_t lo = iterator->entry->firstClusterLo;
+        uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
+        uint32_t* p = candidates + i;
+
+        memcpy(permutation, p, (k - 1) * sizeof * p);
+
+        int c = 0;
+        do
+        {
+            printf("%d ", firstCluster);
+            for (int j = 0; j < k - 1; j++) {
+                printf("%d ", permutation[j]);
+            }
+            printf("\n");
+            c++;
+
+            SHA_CTX context;
+
+            SHA1_Init(&context);
+
+            uint8_t* data;
+            
+            data = volume_root_data(&it, firstCluster);
+            
+            SHA1_Update(&context, data, iterator->bytesPerCluster);
+        
+            for (int j = 0; j < k - 2; j++)
+            {
+                data = volume_root_data(&it, permutation[j]);
+
+                SHA1_Update(&context, data, iterator->bytesPerCluster);
+            }
+    
+            data = volume_root_data(&it, permutation[k - 2]);
+
+            uint32_t remainder = iterator->entry->fileSize;
+
+            remainder -= iterator->bytesPerCluster * (k - 1);
+
+            SHA1_Update(&context, data, remainder);
+
+            unsigned char digest[SHA_DIGEST_LENGTH];
+
+            SHA1_Final(digest, &context);
+
+            for (int j = 0; j < SHA_DIGEST_LENGTH; j++) {
+                printf("%02x ", digest[j]);
+            }
+            printf("\n");
+
+            if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
+            {
+                return VOLUME_FIND_RESULT_SHA1_FOUND;
+            }
+        } 
+        while (next_permutation(permutation, k - 1));
+    }
+
+    return VOLUME_FIND_RESULT_NOT_FOUND;
 }
 
 void recover_fragmented_utility(
@@ -80,8 +140,6 @@ void recover_fragmented_utility(
     VolumeFindResult find;
 
     volume_root_begin(&it, volume);
-
-    VolumeRootIterator copy = it;
 
     find = volume_root_first_free(&it, recover, sha1);
 
@@ -99,17 +157,16 @@ void recover_fragmented_utility(
         goto recover_fragmented_utility_exit;
     }
 
-    find = volume_root_fragmented(&copy, recover, sha1);
+    volume_root_begin(&it, volume);
+
+    find = volume_root_first_free(&it, recover, NULL);
 
     if (!volume_find_result_is_ok(find))
     {
         goto recover_fragmented_utility_exit;
     }
 
-    char buffer[13];
-
-    volume_display_name(buffer, copy.entry->name);
-    fprintf(output, "legit candidate '%s'\n", buffer);
+    find = combinatorial_search(&it, sha1);
 
 recover_fragmented_utility_exit:
     {

@@ -237,20 +237,15 @@ void volume_root_next(VolumeRootIterator* iterator)
     iterator->end = volume_is_eof(iterator->cluster);
 }
 
-static void volume_hash_file(
-    VolumeRootIterator* iterator,
-    unsigned char digest[SHA_DIGEST_LENGTH])
+uint8_t* volume_root_data(VolumeRootIterator* iterator, uint32_t cluster)
 {
-    uint32_t hi = iterator->entry->firstClusterHi;
-    uint32_t lo = iterator->entry->firstClusterLo;
-    uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
     Fat32BootSector* bootSector = iterator->instance->data;
-    uint8_t* data = iterator->instance->data;
+    uint8_t* result = iterator->instance->data;
 
-    data += iterator->firstDataSector * bootSector->bytesPerSector;
-    data += (firstCluster - 2) * iterator->bytesPerCluster;
+    result += iterator->firstDataSector * bootSector->bytesPerSector;
+    result += (cluster - 2) * iterator->bytesPerCluster;
 
-    SHA1(data, iterator->entry->fileSize * sizeof * data, digest);
+    return result;
 }
 
 VolumeFindResult volume_root_first_free(
@@ -286,8 +281,12 @@ VolumeFindResult volume_root_first_free(
             }
 
             unsigned char digest[SHA_DIGEST_LENGTH];
-
-            volume_hash_file(iterator, digest);
+            uint32_t hi = iterator->entry->firstClusterHi;
+            uint32_t lo = iterator->entry->firstClusterLo;
+            uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
+            uint8_t* data = volume_root_data(iterator, firstCluster);
+            
+            SHA1(data, iterator->entry->fileSize * sizeof * data, digest);
 
             if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
             {

@@ -108,3 +108,11 @@ void volume_root_restore_contiguous(
     VolumeRootIterator* iterator,
     uint32_t firstCluster,
     uint32_t clusters);
+
+/**
+ * 
+ * @param iterator
+ * @param cluster
+ * @return 
+ */
+uint8_t* volume_root_data(VolumeRootIterator* iterator, uint32_t cluster);
