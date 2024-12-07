@@ -8,7 +8,7 @@
 # getopt in <main.c>: _POSIX_C_SOURCE >= 2
 
 CC=gcc
-CFLAGS=-D_POSIX_C_SOURCE=2 -O3 -lcrypto -pedantic -std=c99 -Wall -Wextra
+CFLAGS=-D_POSIX_C_SOURCE=2 -g -O3 -lcrypto -pedantic -std=c99 -Wall -Wextra
 
 all: nyufile
 

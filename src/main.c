@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "fat32_attributes.h"
-#include "fat32_boot_sector.h"
 #include "options.h"
 #include "utility.h"
 #include "volume_root_iterator.h"

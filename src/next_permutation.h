@@ -3,6 +3,7 @@
 // Licensed under the MIT license.
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /**
  * Permutes a range of algorithms into the next lexicographical permutation.

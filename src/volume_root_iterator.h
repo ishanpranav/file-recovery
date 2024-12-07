@@ -101,17 +101,6 @@ VolumeFindResult volume_root_single_free(
 /**
  * 
  * @param iterator
- * @param firstCluster
- * @param clusters
- */
-void volume_root_restore_contiguous(
-    VolumeRootIterator* iterator,
-    uint32_t firstCluster,
-    uint32_t clusters);
-
-/**
- * 
- * @param iterator
  * @param cluster
  * @return 
  */

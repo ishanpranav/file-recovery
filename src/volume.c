@@ -323,44 +323,6 @@ VolumeFindResult volume_root_single_free(
 
     return first;
 }
-#include <stdio.h>
-
-struct Chain
-{
-    uint32_t count;
-    uint32_t capacity;
-    uint32_t* items;
-};
-
-void volume_root_restore_contiguous(
-    VolumeRootIterator* iterator,
-    uint32_t firstCluster,
-    uint32_t clusters)
-{
-    void* data = iterator->instance->data;
-    Fat32BootSector* bootSector = data;
-    uint32_t lastCluster = firstCluster + clusters - 1;
-
-    for (uint32_t fat = 0; fat < bootSector->fats; fat++)
-    {
-        // From specification:
-        //   BPB_ResvdSecCnt + (BPB_NumFATs * FATSz)
-
-        uint32_t fatSector = bootSector->reservedSectors;
-
-        fatSector += fat * bootSector->sectorsPerFat;
-
-        uint32_t fatStartByte = fatSector * bootSector->bytesPerSector;
-        uint32_t* fatData = (uint32_t*)((uint8_t*)data + fatStartByte);
-
-        for (uint32_t cluster = firstCluster; cluster < lastCluster; cluster++)
-        {
-            fatData[cluster] = cluster + 1;
-        }
-
-        fatData[lastCluster] = VOLUME_EOF;
-    }
-}
 
 void finalize_volume(Volume* instance)
 {

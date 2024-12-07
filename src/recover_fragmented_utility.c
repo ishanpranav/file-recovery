@@ -9,7 +9,6 @@
 // - https://docs.openssl.org/1.0.2/man3/sha/
 
 #include <string.h>
-#include "fat32_boot_sector.h"
 #include "next_permutation.h"
 #include "utility.h"
 #include "volume_root_iterator.h"
@@ -17,6 +16,8 @@
 #define COMBINATORIAL_SEARCH_K 5
 
 static VolumeFindResult combinatorial_search(
+    uint32_t results[COMBINATORIAL_SEARCH_K],
+    uint32_t clusters,
     VolumeRootIterator* iterator,
     unsigned char sha1[SHA_DIGEST_LENGTH])
 {
@@ -48,12 +49,11 @@ static VolumeFindResult combinatorial_search(
         }
     }
 
-    printf("length = %u\n", length);
+    // printf("length = %u\n", length);
 
-    uint32_t bytesPerCluster = iterator->bytesPerCluster;
-    int k = volume_clusters(iterator->entry->fileSize, bytesPerCluster);
+    int k = clusters;
 
-    printf("k = %u\n", k);
+    // printf("k = %u\n", k);
 
     int max = COMBINATORIAL_SEARCH_N - k;
     int difference = length - k;
@@ -63,7 +63,7 @@ static VolumeFindResult combinatorial_search(
         max = difference;
     }
 
-    printf("max = %u\n", max);
+    // printf("max = %u\n", max);
 
     for (int i = 0; i < max; i++)
     {
@@ -78,11 +78,11 @@ static VolumeFindResult combinatorial_search(
         int c = 0;
         do
         {
-            printf("%d ", firstCluster);
-            for (int j = 0; j < k - 1; j++) {
-                printf("%d ", permutation[j]);
-            }
-            printf("\n");
+            // printf("%d ", firstCluster);
+            // for (int j = 0; j < k - 1; j++) {
+            //     printf("%d ", permutation[j]);
+            // }
+            // printf("\n");
             c++;
 
             SHA_CTX context;
@@ -90,18 +90,18 @@ static VolumeFindResult combinatorial_search(
             SHA1_Init(&context);
 
             uint8_t* data;
-            
+
             data = volume_root_data(&it, firstCluster);
-            
+
             SHA1_Update(&context, data, iterator->bytesPerCluster);
-        
+
             for (int j = 0; j < k - 2; j++)
             {
                 data = volume_root_data(&it, permutation[j]);
 
                 SHA1_Update(&context, data, iterator->bytesPerCluster);
             }
-    
+
             data = volume_root_data(&it, permutation[k - 2]);
 
             uint32_t remainder = iterator->entry->fileSize;
@@ -114,17 +114,21 @@ static VolumeFindResult combinatorial_search(
 
             SHA1_Final(digest, &context);
 
-            for (int j = 0; j < SHA_DIGEST_LENGTH; j++) {
-                printf("%02x ", digest[j]);
-            }
-            printf("\n");
+            // for (int j = 0; j < SHA_DIGEST_LENGTH; j++) {
+            //     printf("%02x ", digest[j]);
+            // }
+            // printf("\n");
 
             if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
             {
+                *results = firstCluster;
+                results++;
+
+                memcpy(results, permutation, (k - 1) * sizeof * results);
+
                 return VOLUME_FIND_RESULT_SHA1_FOUND;
             }
-        } 
-        while (next_permutation(permutation, k - 1));
+        } while (next_permutation(permutation, k - 1));
     }
 
     return VOLUME_FIND_RESULT_NOT_FOUND;
@@ -143,18 +147,25 @@ void recover_fragmented_utility(
 
     find = volume_root_first_free(&it, recover, sha1);
 
+    Fat32BootSector* bootSector = volume->data;
+    uint32_t clusters;
+
     if (volume_find_result_is_ok(find))
     {
+        *it.entry->name = *recover;
+
+        if (!it.entry->fileSize)
+        {
+            goto recover_fragmented_utility_exit;
+        }
+
         uint32_t lo = it.entry->firstClusterLo;
         uint32_t hi = it.entry->firstClusterHi;
         uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
-        uint32_t clusters = volume_clusters(
-            it.entry->fileSize,
-            it.bytesPerCluster);
 
-        volume_root_restore_contiguous(&it, firstCluster, clusters);
+        clusters = volume_clusters(it.entry->fileSize, it.bytesPerCluster);
 
-        goto recover_fragmented_utility_exit;
+        recover_contiguous(bootSector, firstCluster, clusters);
     }
 
     volume_root_begin(&it, volume);
@@ -166,7 +177,37 @@ void recover_fragmented_utility(
         goto recover_fragmented_utility_exit;
     }
 
-    find = combinatorial_search(&it, sha1);
+    uint32_t results[COMBINATORIAL_SEARCH_K];
+
+    clusters = volume_clusters(it.entry->fileSize, it.bytesPerCluster);
+    find = combinatorial_search(results, clusters, &it, sha1);
+
+    if (!volume_find_result_is_ok(find))
+    {
+        goto recover_fragmented_utility_exit;
+    }
+
+    *it.entry->name = *recover;
+
+    for (uint32_t fat = 0; fat < bootSector->fats; fat++)
+    {
+        // From specification:
+        //   BPB_ResvdSecCnt + (BPB_NumFATs * FATSz)
+
+        uint32_t fatSector = bootSector->reservedSectors;
+
+        fatSector += fat * bootSector->sectorsPerFat;
+
+        uint32_t fatStartByte = fatSector * bootSector->bytesPerSector;
+        uint32_t* fatData = (uint32_t*)((uint8_t*)volume->data + fatStartByte);
+
+        for (uint32_t i = 0; i < clusters - 1; i++)
+        {
+            fatData[results[i]] = results[i + 1];
+        }
+
+        fatData[results[clusters - 1]] = VOLUME_EOF;
+    }
 
 recover_fragmented_utility_exit:
     {

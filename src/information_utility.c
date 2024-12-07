@@ -3,7 +3,6 @@
 // Licensed under the MIT license.
 
 #include <inttypes.h>
-#include "fat32_boot_sector.h"
 #include "utility.h"
 #include "volume.h"
 

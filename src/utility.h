@@ -4,6 +4,7 @@
 
 #include <openssl/sha.h>
 #include <stdio.h>
+#include "fat32_boot_sector.h"
 #include "volume.h"
 #ifdef __GNUC__
 #define UTILITY_UNUSED __attribute__ ((unused))
@@ -45,6 +46,17 @@ void list_utility(
     Volume* volume,
     const char* recover,
     unsigned char sha1[SHA_DIGEST_LENGTH]);
+
+/**
+ * 
+ * @param bootSector
+ * @param firstCluster
+ * @param clusters
+ */
+void recover_contiguous(
+    Fat32BootSector* bootSector, 
+    uint32_t firstCluster, 
+    uint32_t clusters);
 
 /**
  * Recovers a contiguous file.
