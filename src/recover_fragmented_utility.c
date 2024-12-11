@@ -55,7 +55,7 @@ static VolumeFindResult combinatorial_search(
     uint32_t* permutation = results + 1;
 
     // TODO: Clean up this atrocity
-    
+
     switch (clusters)
     {
     case 2:
@@ -72,6 +72,8 @@ static VolumeFindResult combinatorial_search(
             data = volume_root_data(&it, firstCluster);
 
             SHA1_Update(&context, data, iterator->bytesPerCluster);
+
+            data = volume_root_data(&it, permutation[0]);
 
             uint32_t remainder = iterator->entry->fileSize;
 
@@ -113,6 +115,8 @@ static VolumeFindResult combinatorial_search(
                     data = volume_root_data(&it, permutation[0]);
 
                     SHA1_Update(&context, data, iterator->bytesPerCluster);
+
+                    data = volume_root_data(&it, permutation[1]);
 
                     uint32_t remainder = iterator->entry->fileSize;
 
