@@ -46,27 +46,102 @@ static VolumeFindResult combinatorial_search(
         }
     }
 
-    // printf("length = %u\n", length);
-
-    // printf("max = %u\n", max);
-
     uint32_t hi = iterator->entry->firstClusterHi;
     uint32_t lo = iterator->entry->firstClusterLo;
     uint32_t firstCluster = fat32_directory_entry_first_cluster(lo, hi);
-    uint32_t permutation[4] = { 2, 2, 2, 2 };
 
-    for (int a = 0; a < n; a++)
+    *results = firstCluster;
+
+    uint32_t* permutation = results + 1;
+
+    // TODO: Clean up this atrocity
+    
+    switch (clusters)
     {
-        for (int b = a + 1; b < n; b++)
+    case 2:
+        for (uint32_t d = 0; d < n; d++)
         {
-            for (int c = b + 1; c < n; c++)
+            permutation[0] = candidates[d];
+
+            SHA_CTX context;
+
+            SHA1_Init(&context);
+
+            uint8_t* data;
+
+            data = volume_root_data(&it, firstCluster);
+
+            SHA1_Update(&context, data, iterator->bytesPerCluster);
+
+            uint32_t remainder = iterator->entry->fileSize;
+
+            remainder -= iterator->bytesPerCluster;
+
+            SHA1_Update(&context, data, remainder);
+
+            unsigned char digest[SHA_DIGEST_LENGTH];
+
+            SHA1_Final(digest, &context);
+
+            if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
             {
-                for (int d = c + 1; d < n; d++)
+                return VOLUME_FIND_RESULT_SHA1_FOUND;
+            }
+        }
+        break;
+
+    case 3:
+        for (uint32_t c = 0; c < n; c++)
+        {
+            for (uint32_t d = c + 1; d < n; d++)
+            {
+                permutation[0] = candidates[c];
+                permutation[1] = candidates[d];
+
+                do
                 {
-                    permutation[0] = candidates[a];
-                    permutation[1] = candidates[b];
-                    permutation[2] = candidates[c];
-                    permutation[3] = candidates[d];
+                    SHA_CTX context;
+
+                    SHA1_Init(&context);
+
+                    uint8_t* data;
+
+                    data = volume_root_data(&it, firstCluster);
+
+                    SHA1_Update(&context, data, iterator->bytesPerCluster);
+
+                    data = volume_root_data(&it, permutation[0]);
+
+                    SHA1_Update(&context, data, iterator->bytesPerCluster);
+
+                    uint32_t remainder = iterator->entry->fileSize;
+
+                    remainder -= iterator->bytesPerCluster * 2;
+
+                    SHA1_Update(&context, data, remainder);
+
+                    unsigned char digest[SHA_DIGEST_LENGTH];
+
+                    SHA1_Final(digest, &context);
+
+                    if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
+                    {
+                        return VOLUME_FIND_RESULT_SHA1_FOUND;
+                    }
+                } while (next_permutation(permutation, 2));
+            }
+        }
+        break;
+    case 4:
+        for (uint32_t b = 0; b < n; b++)
+        {
+            for (uint32_t c = b + 1; c < n; c++)
+            {
+                for (uint32_t d = c + 1; d < n; d++)
+                {
+                    permutation[0] = candidates[b];
+                    permutation[1] = candidates[c];
+                    permutation[2] = candidates[d];
 
                     do
                     {
@@ -80,7 +155,7 @@ static VolumeFindResult combinatorial_search(
 
                         SHA1_Update(&context, data, iterator->bytesPerCluster);
 
-                        for (int j = 0; j < clusters - 2; j++)
+                        for (uint32_t j = 0; j < clusters - 2; j++)
                         {
                             data = volume_root_data(&it, permutation[j]);
 
@@ -99,89 +174,71 @@ static VolumeFindResult combinatorial_search(
 
                         SHA1_Final(digest, &context);
 
-                        // for (int j = 0; j < SHA_DIGEST_LENGTH; j++) {
-                        //     printf("%02x ", digest[j]);
-                        // }
-                        // printf("\n");
-
                         if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
                         {
-                            *results = firstCluster;
-                            results++;
-
-                            memcpy(
-                                results, 
-                                permutation, 
-                                (clusters - 1) * sizeof * permutation);
-
                             return VOLUME_FIND_RESULT_SHA1_FOUND;
                         }
-                    } while (next_permutation(permutation, 4));
+                    } while (next_permutation(permutation, 3));
                 }
             }
         }
+        break;
+    case 5:
+        for (uint32_t a = 0; a < n; a++)
+        {
+            for (uint32_t b = a + 1; b < n; b++)
+            {
+                for (uint32_t c = b + 1; c < n; c++)
+                {
+                    for (uint32_t d = c + 1; d < n; d++)
+                    {
+                        permutation[0] = candidates[a];
+                        permutation[1] = candidates[b];
+                        permutation[2] = candidates[c];
+                        permutation[3] = candidates[d];
+
+                        do
+                        {
+                            SHA_CTX context;
+
+                            SHA1_Init(&context);
+
+                            uint8_t* data;
+
+                            data = volume_root_data(&it, firstCluster);
+
+                            SHA1_Update(&context, data, iterator->bytesPerCluster);
+
+                            for (uint32_t j = 0; j < clusters - 2; j++)
+                            {
+                                data = volume_root_data(&it, permutation[j]);
+
+                                SHA1_Update(&context, data, iterator->bytesPerCluster);
+                            }
+
+                            data = volume_root_data(&it, permutation[clusters - 2]);
+
+                            uint32_t remainder = iterator->entry->fileSize;
+
+                            remainder -= iterator->bytesPerCluster * (clusters - 1);
+
+                            SHA1_Update(&context, data, remainder);
+
+                            unsigned char digest[SHA_DIGEST_LENGTH];
+
+                            SHA1_Final(digest, &context);
+
+                            if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
+                            {
+                                return VOLUME_FIND_RESULT_SHA1_FOUND;
+                            }
+                        } while (next_permutation(permutation, 4));
+                    }
+                }
+            }
+        }
+        break;
     }
-
-    // for (int i = 0; i < n; i++) {
-    //     printf("%d ", candidates[i]);
-    // }
-    // printf("\n");
-    // printf("FOLKS THE COUNT IS nPr(%d, %d) =  %d\n", n, 4, count);
-
-    // k_heap_permute(candidates, COMBINATORIAL_SEARCH_N, COMBINATORIAL_SEARCH_K - 1, process, NULL);
-
-    // do
-    // {
-    //     // printf("%d ", firstCluster);
-    //     // for (int j = 0; j < k - 1; j++) {
-    //     //     printf("%d ", permutation[j]);
-    //     // }
-    //     // printf("\n");
-    //     SHA_CTX context;
-
-    //     SHA1_Init(&context);
-
-    //     uint8_t* data;
-
-    //     data = volume_root_data(&it, firstCluster);
-
-    //     SHA1_Update(&context, data, iterator->bytesPerCluster);
-
-    //     for (int j = 0; j < k - 2; j++)
-    //     {
-    //         data = volume_root_data(&it, permutation[j]);
-
-    //         SHA1_Update(&context, data, iterator->bytesPerCluster);
-    //     }
-
-    //     data = volume_root_data(&it, permutation[k - 2]);
-
-    //     uint32_t remainder = iterator->entry->fileSize;
-
-    //     remainder -= iterator->bytesPerCluster * (k - 1);
-
-    //     SHA1_Update(&context, data, remainder);
-
-    //     unsigned char digest[SHA_DIGEST_LENGTH];
-
-    //     SHA1_Final(digest, &context);
-
-    //     // for (int j = 0; j < SHA_DIGEST_LENGTH; j++) {
-    //     //     printf("%02x ", digest[j]);
-    //     // }
-    //     // printf("\n");
-
-    //     if (memcmp(digest, sha1, SHA_DIGEST_LENGTH) == 0)
-    //     {
-    //         *results = firstCluster;
-    //         results++;
-
-    //         memcpy(results, permutation, (k - 1) * sizeof * permutation);
-
-    //         return VOLUME_FIND_RESULT_SHA1_FOUND;
-    //     }
-    // }
-    // while (next_permutation(permutation, k - 1));
 
     return VOLUME_FIND_RESULT_NOT_FOUND;
 }
