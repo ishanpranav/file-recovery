@@ -2,6 +2,9 @@
 // Copyright (c) 2024 Ishan Pranav
 // Licensed under the MIT license.
 
+// References:
+//  - Permutation - Generation in lexicographic order: https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order
+
 #include <stdint.h>
 #include "next_permutation.h"
 
@@ -13,9 +16,9 @@ static void swap(uint32_t* left, uint32_t* right)
     *right = item;
 }
 
-static void reverse(uint32_t* left, uint32_t* right) 
+static void reverse(uint32_t* left, uint32_t* right)
 {
-    while (left < right) 
+    while (left < right)
     {
         swap(left, right);
 
@@ -24,23 +27,23 @@ static void reverse(uint32_t* left, uint32_t* right)
     }
 }
 
-bool next_permutation(uint32_t* items, int length) 
+bool next_permutation(uint32_t* items, int length)
 {
     int i = length - 2;
 
-    while (i >= 0 && items[i] >= items[i + 1]) 
+    while (i >= 0 && items[i] >= items[i + 1])
     {
         i--;
     }
 
-    if (i < 0) 
+    if (i < 0)
     {
         return false;
     }
 
     int j = length - 1;
-    
-    while (items[j] <= items[i]) 
+
+    while (items[j] <= items[i])
     {
         j--;
     }
