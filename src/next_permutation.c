@@ -10,7 +10,7 @@
 
 static void swap(uint32_t* left, uint32_t* right)
 {
-    int item = *left;
+    uint32_t item = *left;
 
     *left = *right;
     *right = item;
